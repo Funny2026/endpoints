@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Viewer</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 10px; background-color: #f4f4f9; }
+        #app { max-width: 600px; margin: 0 auto; }
+        h1 { border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 0; }
+        .section { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .section h2 { margin-top: 0; color: #555; font-size: 1.2em; }
+        .stop-list { list-style: none; padding: 0; }
+        .stop-list li { padding: 8px 0; border-bottom: 1px dotted #eee; font-size: 1em; }
+        .stop-list li:last-child { border-bottom: none; }
+        #status { font-size: 0.8em; color: #888; text-align: right; padding-bottom: 5px; }
+        .loading { text-align: center; padding: 10px; font-style: italic; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Locked Stations</h1>
+        <div id="status">Loading...</div>
+
+        <div class="section">
+            <h2>Occurred Today:</h2>
+            <ul id="recently-unplanned" class="stop-list">
+                <li class="loading">Fetching data...</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Upcoming:</h2>
+            <ul id="upcoming-unplanned" class="stop-list">
+                <li class="loading">Awaiting data...</li>
+            </ul>
+        </div>
+    </div>
+    <script type="module">
+async function fetchWithRetry(url, retries, timeout = 50000) {
+    let lastError;
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            const controller = new AbortController();
+            const signal = controller.signal;
+
+            // Set up timeout
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            const response = await fetch(url, { signal });
+            
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return response.json();
+        } catch (error) {
+            lastError = error;
+            if (error && error.name === 'AbortError') {
+                lastError = new Error(`Request timed out after ${timeout}ms`);
+            }
+            console.warn(`Fetch attempt ${i + 1}/${retries} failed for ${url}: ${lastError?.message || lastError}`);
+        }
+    }
+
+    throw new Error(`Failed to fetch ${url} after ${retries} attempts.`);
+}
+
+// Data processing utilities
+/**
+ * Processes a single trip's stop array according to specific rules
+ * to identify internal unplanned stops.
+ *
+ * Rules Summary:
+ * 1. Remove stops where isStopping == "0".
+ * 2. Trim continuous blocks of isCancelled == "1" from start and end.
+ * 3. Filter the remaining list to keep only stops where isCancelled == "1".
+ *
+ * Note: The original spec used keys isPlanned/isNotOperating; existing data uses isPlanned/isNotOperating
+ * while older processor used isStopping/isCancelled. We'll support both sets of keys for robustness.
+ *
+ * @param {Array<Object>} stops - Array of stop objects.
+ * @returns {Array<Object>} Filtered list of internal unplanned stops.
+ */
+function processTripStops(stops) {
+    if (!stops || stops.length === 0) {
+        return [];
+    }
+
+    // Normalize function: map isPlanned -> isStopping, isNotOperating -> isCancelled if original keys absent
+    const normalized = stops.map(s => {
+        const copy = Object.assign({}, s);
+        if (copy.isStopping === undefined && copy.isPlanned !== undefined) {
+            copy.isStopping = copy.isPlanned;
+        }
+        if (copy.isCancelled === undefined && copy.isNotOperating !== undefined) {
+            copy.isCancelled = copy.isNotOperating;
+        }
+        return copy;
+    });
+
+    // 1. Remove entries that have isStopping == "0"
+    let plannedStops = normalized.filter(stop => stop.isStopping === "1" || stop.isStopping === 1 || stop.isStopping === true);
+
+    if (plannedStops.length === 0) {
+        return [];
+    }
+
+    // 2. Trim start and end array that have isCancelled == "1"
+    let startIndex = 0;
+    while (startIndex < plannedStops.length && (plannedStops[startIndex].isCancelled === "1" || plannedStops[startIndex].isCancelled === 1 || plannedStops[startIndex].isCancelled === true)) {
+        startIndex++;
+    }
+
+    let endIndex = plannedStops.length - 1;
+    while (endIndex >= startIndex && (plannedStops[endIndex].isCancelled === "1" || plannedStops[endIndex].isCancelled === 1 || plannedStops[endIndex].isCancelled === true)) {
+        endIndex--;
+    }
+
+    let trimmedStops = plannedStops.slice(startIndex, endIndex + 1);
+
+    if (trimmedStops.length === 0) {
+        return [];
+    }
+    
+    // 3. Keep only stops where isCancelled == "1" (internal unplanned)
+    const internalUnplannedStops = trimmedStops.filter(stop => stop.isCancelled === "1" || stop.isCancelled === 1 || stop.isCancelled === true);
+
+    return internalUnplannedStops;
+}
+
+/**
+ * Extracts upcoming unplanned info from the combined list of internal unplanned stops.
+ * Upcoming unplanned stops are those lacking the 'completeInfo' key.
+ * 
+ * @param {Array<Object>} combinedUnplannedStops - The final array of processed stops.
+ * @returns {Array<Object>} Stops lacking 'completeInfo'.
+ */
+function getUpcomingUnplannedInfo(combinedUnplannedStops) {
+    return combinedUnplannedStops.filter(stop => !('completeInfo' in stop));
+}
+
+/**
+ * Extracts and sorts unique names from a list of stop objects.
+ * 
+ * @param {Array<Object>} stops - Array of stop objects.
+ * @returns {Array<string>} Alphabetically sorted list of unique names.
+ */
+function getUniqueSortedNames(stops) {
+    const names = (stops || []).map(stop => stop.name).filter(name => name);
+    const uniqueNames = [...new Set(names)];
+    return uniqueNames.sort();
+}
+
+const MAIN_JSON_URL = 'https://www.gotracker.ca/gotracker/mobile/proxy/web/Info/TripPatterns/Train';
+const MAX_TRIP_RETRIES = 5;
+const MAIN_FETCH_RETRIES = 5;
+const FETCH_TIMEOUT_MS = 50000;
+const POLLING_INTERVAL = 60000; // 60 seconds
+
+// State storage for successfully fetched and processed trip data
+let storedTripData = new Map(); // Key: trip number (e.g., "T102"), Value: Array of processed unplanned stops
+let currentTripNumbers = [];
+let pollingIntervalId = null;
+
+const statusEl = document.getElementById('status');
+const recentlyUnplannedEl = document.getElementById('recently-unplanned');
+const upcomingUnplannedEl = document.getElementById('upcoming-unplanned');
+
+/**
+ * Renders the processed data to the UI.
+ * @param {Array<Object>} combinedUnplannedStops - All processed stops across all trips.
+ */
+function renderResults(combinedUnplannedStops) {
+    const recentlyUnplannedNames = getUniqueSortedNames(combinedUnplannedStops);
+    const upcomingUnplannedInfo = getUpcomingUnplannedInfo(combinedUnplannedStops);
+    const upcomingUnplannedNames = getUniqueSortedNames(upcomingUnplannedInfo);
+
+    const renderList = (element, names) => {
+        element.innerHTML = names.length > 0
+            ? names.map(name => `<li>${name}</li>`).join('')
+            : '<li class="loading">None currently reported.</li>';
+    };
+
+    renderList(recentlyUnplannedEl, recentlyUnplannedNames);
+    renderList(upcomingUnplannedEl, upcomingUnplannedNames);
+
+    statusEl.textContent = `Last updated: ${new Date().toLocaleTimeString()} | Polling every 30s`;
+}
+
+/**
+ * Fetches and processes data for a single trip number.
+ * Updates storedTripData upon success or logs failure after 5 retries.
+ * @param {string} tripNumber - e.g., "T102"
+ */
+async function fetchAndProcessTrip(tripNumber) {
+    const url = `https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Trip/${tripNumber}`;
+
+    try {
+        const tripData = await fetchWithRetry(url, MAX_TRIP_RETRIES, FETCH_TIMEOUT_MS);
+
+        const stops = tripData?.commitmentTrip?.[0]?.stop;
+
+        if (stops) {
+            const processedStops = processTripStops(stops);
+            storedTripData.set(tripNumber, processedStops);
+        } else {
+            console.warn(`Trip data ${tripNumber} structure unexpected or stops array missing.`);
+            storedTripData.set(tripNumber, []);
+        }
+
+    } catch (error) {
+        // If fetching failed after MAX_TRIP_RETRIES (5), this info is skipped.
+        // We ensure there is an entry, even if empty, so it doesn't affect combining logic later.
+        if (!storedTripData.has(tripNumber)) {
+            storedTripData.set(tripNumber, []);
+        }
+        console.error(`Skipping trip ${tripNumber} data due to persistent fetch failure.`);
+    }
+}
+
+/**
+ * Orchestrates fetching main list and then all individual trip details.
+ */
+async function fetchData() {
+    console.log("Starting data fetch cycle...");
+    statusEl.textContent = `Fetching data...`
+
+    let newTripNumbers = [];
+    try {
+        const mainData = await fetchWithRetry(MAIN_JSON_URL, MAIN_FETCH_RETRIES, FETCH_TIMEOUT_MS);
+
+        // Extract all trip numbers
+        newTripNumbers = mainData.flatMap(group =>
+            group.trips ? group.trips.map(trip => trip.number).filter(n => n) : []
+        );
+
+    } catch (error) {
+        // If main.json fails, reuse the previously known list of trip numbers.
+        console.error("Failed to fetch main trip list. Reusing previous list.", error);
+        newTripNumbers = currentTripNumbers;
+
+        if (newTripNumbers.length === 0) {
+            statusEl.textContent = `Error: Cannot load trip index. Retrying soon.`;
+            return;
+        }
+    }
+
+    // Clear obsolete data: If main.json changed, remove stored data for trips no longer listed.
+    const newTripNumberSet = new Set(newTripNumbers);
+    const tripsToClear = Array.from(storedTripData.keys()).filter(key => !newTripNumberSet.has(key));
+
+    tripsToClear.forEach(key => {
+        console.log(`Clearing obsolete trip data for ${key}`);
+        storedTripData.delete(key);
+    });
+
+    currentTripNumbers = newTripNumbers;
+
+    // Fetch and process all trips concurrently
+    statusEl.textContent = `Fetching details for ${currentTripNumbers.length} trips...`;
+
+    await Promise.all(currentTripNumbers.map(fetchAndProcessTrip));
+
+    // Combine results into one big array
+    let combinedUnplannedStops = [];
+    currentTripNumbers.forEach(tripNumber => {
+        // Only combine if the trip number was present in the latest list
+        if (storedTripData.has(tripNumber)) {
+            combinedUnplannedStops = combinedUnplannedStops.concat(storedTripData.get(tripNumber));
+        }
+    });
+
+    // Render output
+    renderResults(combinedUnplannedStops);
+    console.log("Data fetch cycle complete.");
+}
+
+/**
+ * Initializes the application and starts the polling loop.
+ */
+function init() {
+    // Initial fetch
+    fetchData();
+
+    // Set up polling interval
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+    }
+    pollingIntervalId = setInterval(fetchData, POLLING_INTERVAL);
+}
+
+// Start the application
+init();
+    </script>
+</body>
+</html>
+
