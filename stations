@@ -28,13 +28,6 @@
                 <li class="loading">Fetching data...</li>
             </ul>
         </div>
-
-        <div class="section">
-            <h2>Upcoming:</h2>
-            <ul id="upcoming-unplanned" class="stop-list">
-                <li class="loading">Awaiting data...</li>
-            </ul>
-        </div>
     </div>
     <script type="module">
 async function fetchWithRetry(url, retries, timeout = 50000) {
@@ -133,17 +126,6 @@ function processTripStops(stops) {
 }
 
 /**
- * Extracts upcoming unplanned info from the combined list of internal unplanned stops.
- * Upcoming unplanned stops are those lacking the 'completeInfo' key.
- * 
- * @param {Array<Object>} combinedUnplannedStops - The final array of processed stops.
- * @returns {Array<Object>} Stops lacking 'completeInfo'.
- */
-function getUpcomingUnplannedInfo(combinedUnplannedStops) {
-    return combinedUnplannedStops.filter(stop => !('completeInfo' in stop));
-}
-
-/**
  * Extracts and sorts unique names from a list of stop objects.
  * 
  * @param {Array<Object>} stops - Array of stop objects.
@@ -168,7 +150,6 @@ let pollingIntervalId = null;
 
 const statusEl = document.getElementById('status');
 const recentlyUnplannedEl = document.getElementById('recently-unplanned');
-const upcomingUnplannedEl = document.getElementById('upcoming-unplanned');
 
 /**
  * Renders the processed data to the UI.
@@ -176,8 +157,6 @@ const upcomingUnplannedEl = document.getElementById('upcoming-unplanned');
  */
 function renderResults(combinedUnplannedStops) {
     const recentlyUnplannedNames = getUniqueSortedNames(combinedUnplannedStops);
-    const upcomingUnplannedInfo = getUpcomingUnplannedInfo(combinedUnplannedStops);
-    const upcomingUnplannedNames = getUniqueSortedNames(upcomingUnplannedInfo);
 
     const renderList = (element, names) => {
         element.innerHTML = names.length > 0
@@ -186,9 +165,8 @@ function renderResults(combinedUnplannedStops) {
     };
 
     renderList(recentlyUnplannedEl, recentlyUnplannedNames);
-    renderList(upcomingUnplannedEl, upcomingUnplannedNames);
 
-    statusEl.textContent = `Last updated: ${new Date().toLocaleTimeString()} | Polling every 30s`;
+    statusEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 }
 
 /**
@@ -227,7 +205,7 @@ async function fetchAndProcessTrip(tripNumber) {
  */
 async function fetchData() {
     console.log("Starting data fetch cycle...");
-    statusEl.textContent = `Fetching data...`
+    statusEl.textContent = `Loading data...`
 
     let newTripNumbers = [];
     try {
@@ -298,4 +276,5 @@ init();
     </script>
 </body>
 </html>
+
 
