@@ -54,7 +54,7 @@
     }
 
     #emoji {
-      font-size: 100px;
+      font-size: 120px;
       margin: 12px 0;
       transition: transform 0.3s ease-in-out;
       display: flex;
@@ -228,7 +228,7 @@
     }
 
     .result-emoji {
-      font-size: 140px;
+      font-size: 120px;
       margin: 0 10px;
     }
 
