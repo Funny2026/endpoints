@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Status Board</title>
+    <style>
+:root {
+    --bg-color: #000000;
+    --text-color: #FFFFFF;
+    --border-color: #C0C0C0;
+    --orange-color: #FF8300;
+    --yellow-color: #FFC800;
+    --red-color: #EE3135;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 2vw;
+}
+
+@font-face {
+  font-family: ClearviewADA;
+  src: url("https://uploads.strikinglycdn.com/files/fa2bc047-4a70-4660-8e79-80f1d359deb0/ClearviewADA-Medium-fitted.txt?t=1729742755&id=4194931")
+    format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: ClearviewADA;
+  src: url("https://uploads.strikinglycdn.com/files/fa2bc047-4a70-4660-8e79-80f1d359deb0/ClearviewADA-DemiBold-fitted.txt?t=1729742774&id=4194932")
+    format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: ClearviewADA, Arial, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+}
+
+.lighter {
+  font-weight: normal;
+  color: #E0E0E0;
+}
+
+.dashboard-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    border: 2px solid var(--border-color);
+}
+
+.column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.column:last-child {
+    border-right: none;
+}
+
+header {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    background: #111;
+}
+
+.table-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 1rem;
+    overflow: hidden;
+    justify-content: center;
+}
+
+.row:nth-child(6), .empty-row {
+    border-bottom: none;
+}
+
+.main-text {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.sub-text-wrapper {
+    margin-top: 0.2rem;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    height: 1.2rem;
+}
+
+.sub-text {
+    font-size: 0.9rem;
+    display: inline-block;
+    color: #CCC;
+}
+
+.scrolling {
+    animation: scroll-text 4s linear infinite;
+    padding-left: 100%;
+}
+
+@keyframes scroll-text {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+.pagination-dots {
+    height: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+}
+
+.dot.active {
+    background: var(--text-color);
+}
+
+/* Color states */
+.color-orange { color: var(--orange-color) !important; }
+.color-yellow { color: var(--yellow-color) !important; }
+.color-white { color: var(--text-color) !important; }
+.color-red { color: var(--red-color) !important; }
+</style>
+</head>
+<body>
+    <div id="app" class="dashboard-container">
+        <div class="column left-column">
+            <header>Locked Stations<span class="lighter"> | Gares fermées</span></header>
+            <div id="bypass-list" class="table-container">
+                <!-- Rows will be injected here -->
+            </div>
+            <div class="pagination-dots" id="bypass-dots"></div>
+        </div>
+        <div class="column right-column">
+            <header>Delays<span class="lighter"> | Retards</span></header>
+            <div id="delay-list" class="table-container">
+                <!-- Rows will be injected here -->
+            </div>
+            <div class="pagination-dots" id="delay-dots"></div>
+        </div>
+    </div>
+    <script>
+class Dashboard {
+    constructor() {
+        this.bypassPage = 0;
+        this.delayPage = 0;
+        this.pageSize = 6;
+        this.cycleTime = 5000;
+        this.refreshInterval = 5000;
+
+        this.bypassingStations = [];
+        this.vehicleDelays = [];
+        this.allBypassingVehicleIds = new Set();
+
+        // flag to indicate whether a fetch cycle is in progress
+        this.fetchInProgress = false;
+
+        // indicates whether initial main files have finished loading
+        this.initialLoaded = false;
+
+        // indicates whether automatic cycling has been started
+        this.cyclingStarted = false;
+
+        this.init();
+    }
+
+    async init() {
+        // show loading text immediately on both panels until first successful main load
+        this.renderLoading();
+        // Do NOT start cycling yet — wait until the initial main files have loaded
+        this.refreshLoop();
+    }
+
+    async refreshLoop() {
+        while (true) {
+            if (!this.fetchInProgress) {
+                await this.loadAndProcess();
+            }
+            await new Promise(resolve => setTimeout(resolve, this.refreshInterval));
+        }
+    }
+
+    async loadAndProcess() {
+        this.fetchInProgress = true;
+        try {
+            // Step 1: Load main 3 files
+            const [activeVehicles, trips, tripCodes] = await Promise.all([
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/AVL/InService/Type/R'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/All'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Info/TripPatterns/Train')
+            ]);
+
+            if (!activeVehicles || !trips || !tripCodes) {
+                console.error("Critical data missing");
+                return;
+            }
+
+            // mark initial load completed when all three main files are present
+            this.initialLoaded = true;
+
+            // Start the pagination cycling only once, after initial main files loaded
+            if (!this.cyclingStarted) {
+                this.startCycling();
+                this.cyclingStarted = true;
+            }
+
+            // Step 2: Get bypass candidates
+            const rawBypasses = processBypasses(trips, tripCodes);
+            this.allBypassingVehicleIds = new Set();
+            rawBypasses.forEach(b => b.vehicles.forEach(v => this.allBypassingVehicleIds.add(v)));
+
+            // Step 3: Check "Active" status for bypasses
+            const activeBypasses = await Promise.all(rawBypasses.map(async (b) => {
+            const path = `https://www.gotracker.ca/gotracker/mobile/proxy/web/Messages/Signage/Rail/${b.lineCode}/${b.stopCode}`;
+                const lineData = await fetchData(path);
+                
+                let isActive = false;
+                let activeVehiclesAtStop = new Set();
+
+                if (lineData?.directions) {
+                    lineData.directions.forEach(dir => {
+                        dir.tripMessages.forEach(msg => {
+                            if (b.vehicles.has(msg.tripName)) {
+                                isActive = true;
+                                activeVehiclesAtStop.add(msg.tripName);
+                            }
+                        });
+                    });
+                }
+
+                return {
+                    ...b,
+                    isActive,
+                    activeVehiclesAtStop
+                };
+            }));
+
+            this.bypassingStations = activeBypasses.sort((a, b) => {
+                return String(a.stationName).localeCompare(String(b.stationName), undefined, { sensitivity: 'base' });
+            });
+
+            this.vehicleDelays = processDelays(activeVehicles, this.allBypassingVehicleIds)
+                .sort((a, b) => b.delaySeconds - a.delaySeconds);
+
+            // Reset pagination if content changed significantly? 
+            // For now just render.
+            this.render();
+        } catch (e) {
+            console.error("Error during loadAndProcess:", e);
+        } finally {
+            this.fetchInProgress = false;
+        }
+    }
+
+    render() {
+        this.renderBypasses();
+        this.renderDelays();
+    }
+
+    renderLoading() {
+        // populate both lists with a single "Loading Chargement" row
+        const makeLoading = (containerId, dotsId) => {
+            const container = document.getElementById(containerId);
+            const dotsContainer = document.getElementById(dotsId);
+            container.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            const row = document.createElement('div');
+            row.className = 'row';
+            const mainText = document.createElement('div');
+            mainText.className = 'main-text';
+            mainText.textContent = 'Loading | Chargement';
+            const subWrapper = document.createElement('div');
+            subWrapper.className = 'sub-text-wrapper';
+            const subText = document.createElement('div');
+            subText.className = 'sub-text';
+            subText.textContent = '';
+            subWrapper.appendChild(subText);
+            row.appendChild(mainText);
+            row.appendChild(subWrapper);
+            container.appendChild(row);
+
+            for (let i = 1; i < this.pageSize; i++) {
+                const emptyRow = document.createElement('div');
+                emptyRow.className = 'row empty-row';
+                container.appendChild(emptyRow);
+            }
+        };
+
+        makeLoading('bypass-list', 'bypass-dots');
+        makeLoading('delay-list', 'delay-dots');
+    }
+
+    renderBypasses() {
+        const container = document.getElementById('bypass-list');
+        const dotsContainer = document.getElementById('bypass-dots');
+        container.innerHTML = '';
+        dotsContainer.innerHTML = '';
+
+        const start = this.bypassPage * this.pageSize;
+        const end = start + this.pageSize;
+        const visible = this.bypassingStations.slice(start, end);
+
+        visible.forEach(station => {
+            const row = document.createElement('div');
+            row.className = 'row';
+            
+            const mainText = document.createElement('div');
+            mainText.className = `main-text ${station.isActive ? 'color-orange' : ''}`;
+            mainText.textContent = station.stationName;
+
+            const subWrapper = document.createElement('div');
+            subWrapper.className = 'sub-text-wrapper';
+            
+            const subText = document.createElement('div');
+            subText.className = 'sub-text';
+            
+            const sortedVehicles = Array.from(station.vehicles).sort();
+            sortedVehicles.forEach((vNum, idx) => {
+                const span = document.createElement('span');
+                span.textContent = vNum;
+                if (station.activeVehiclesAtStop.has(vNum)) {
+                    span.className = 'color-orange';
+                }
+                subText.appendChild(span);
+                if (idx < sortedVehicles.length - 1) {
+                    subText.appendChild(document.createTextNode(', '));
+                }
+            });
+
+            subWrapper.appendChild(subText);
+            row.appendChild(mainText);
+            row.appendChild(subWrapper);
+            container.appendChild(row);
+
+            setTimeout(() => {
+                if (subText.offsetWidth > subWrapper.offsetWidth) {
+                    subText.classList.add('scrolling');
+                }
+            }, 50);
+        });
+
+        for (let i = visible.length; i < this.pageSize; i++) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'row empty-row';
+            container.appendChild(emptyRow);
+        }
+
+        const pageCount = Math.ceil(this.bypassingStations.length / this.pageSize);
+        for (let i = 0; i < pageCount; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === this.bypassPage ? 'active' : ''}`;
+            dotsContainer.appendChild(dot);
+        }
+    }
+
+    renderDelays() {
+        const container = document.getElementById('delay-list');
+        const dotsContainer = document.getElementById('delay-dots');
+        container.innerHTML = '';
+        dotsContainer.innerHTML = '';
+
+        const start = this.delayPage * this.pageSize;
+        const end = start + this.pageSize;
+        const visible = this.vehicleDelays.slice(start, end);
+
+        visible.forEach(delay => {
+            const row = document.createElement('div');
+            row.className = 'row';
+            
+            const mainText = document.createElement('div');
+            mainText.className = `main-text ${delay.colorClass}`;
+            mainText.textContent = formatTime(delay.delaySeconds);
+
+            const subWrapper = document.createElement('div');
+            subWrapper.className = 'sub-text-wrapper';
+            
+            const subText = document.createElement('div');
+            subText.className = 'sub-text';
+            subText.textContent = `${delay.tripName}`;
+
+            subWrapper.appendChild(subText);
+            row.appendChild(mainText);
+            row.appendChild(subWrapper);
+            container.appendChild(row);
+
+            setTimeout(() => {
+                if (subText.offsetWidth > subWrapper.offsetWidth) {
+                    subText.classList.add('scrolling');
+                }
+            }, 50);
+        });
+
+        for (let i = visible.length; i < this.pageSize; i++) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'row empty-row';
+            container.appendChild(emptyRow);
+        }
+
+        const pageCount = Math.ceil(this.vehicleDelays.length / this.pageSize);
+        for (let i = 0; i < pageCount; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === this.delayPage ? 'active' : ''}`;
+            dotsContainer.appendChild(dot);
+        }
+    }
+
+    startCycling() {
+        setInterval(() => {
+            const bypassMax = Math.ceil(this.bypassingStations.length / this.pageSize);
+            const delayMax = Math.ceil(this.vehicleDelays.length / this.pageSize);
+
+            // Increment bypass page
+            if (bypassMax > 1) {
+                this.bypassPage = (this.bypassPage + 1) % bypassMax;
+            } else {
+                this.bypassPage = 0;
+            }
+
+            // Increment delay page
+            if (delayMax > 1) {
+                this.delayPage = (this.delayPage + 1) % delayMax;
+            } else {
+                this.delayPage = 0;
+            }
+
+            this.render();
+        }, this.cycleTime);
+    }
+}
+
+new Dashboard();
+async function fetchData(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.error(`Failed to fetch ${url}`, e);
+        return null;
+    }
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m} mins ${s} secs`;
+}
+
+/**
+ * Logic for Bypassing Stations
+ */
+function processBypasses(tripsData, tripCodesData) {
+    const bypassResults = []; // { stationName, atlsId, vehicles: Set<string>, lineCode, stopCode }
+
+    if (!tripsData?.commitmentTrip) return [];
+
+    tripsData.commitmentTrip.forEach(trip => {
+        let stops = [...trip.stop];
+
+        // 1. Trim start and end parts that have "isCancelled": "1"
+        let start = 0;
+        while (start < stops.length && stops[start].isCancelled === "1") start++;
+        let end = stops.length - 1;
+        while (end >= 0 && stops[end].isCancelled === "1") end--;
+
+        if (start > end) return; // Entire trip cancelled or empty
+        stops = stops.slice(start, end + 1);
+
+        // 2. Remove elements that have "isStopping": "0"
+        // 3. For remaining stops that have "isCancelled": "1", it is considered a bypassing station.
+        stops.forEach(stop => {
+            if (stop.isStopping === "1" && stop.isCancelled === "1") {
+                // Find line and stop code for this atlsId
+                let lineCode = "";
+                let stopCode = "";
+                
+                tripCodesData.forEach(l => {
+                    const foundStop = l.stops.find(s => s.atlsId === stop.id);
+                    if (foundStop) {
+                        lineCode = l.code;
+                        stopCode = foundStop.code;
+                    }
+                });
+
+                let existing = bypassResults.find(r => r.atlsId === stop.id);
+                if (!existing) {
+                    existing = { 
+                        stationName: stop.name, 
+                        atlsId: stop.id, 
+                        vehicles: new Set(),
+                        lineCode,
+                        stopCode
+                    };
+                    bypassResults.push(existing);
+                }
+                existing.vehicles.add(trip.tripNumber);
+            }
+        });
+    });
+
+    return bypassResults;
+}
+
+/**
+ * Logic for Vehicle Delays
+ */
+function processDelays(activeVehiclesData, bypassingVehicleIds) {
+    if (!activeVehiclesData?.trip) return [];
+
+    return activeVehiclesData.trip
+        .filter(v => parseInt(v.delaySeconds) >= 120)
+        .map(v => {
+            const delay = parseInt(v.delaySeconds);
+            let color = "white";
+            
+            if (bypassingVehicleIds.has(v.tripNumber)) {
+                color = "red";
+            } else if (delay >= 600) {
+                color = "orange";
+            } else if (delay >= 300) {
+                color = "yellow";
+            } else {
+                color = "white";
+            }
+
+            return {
+                tripNumber: v.tripNumber,
+                tripName: v.tripName,
+                delaySeconds: delay,
+                colorClass: `color-${color}`
+            };
+        });
+}
+</script>
+</body>
+</html>
