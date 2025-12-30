@@ -130,9 +130,13 @@ header {
     padding-left: 100%;
 }
 
+.invisible-ghost {
+    visibility: hidden;
+}
+
 @keyframes scroll-text {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
+    0% { transform: translateX(0);}
+    100% { transform: translateX(-100%); visibility: hidden;}
 }
 
 .pagination-dots {
@@ -371,13 +375,12 @@ class Dashboard {
             subWrapper.appendChild(subText);
             row.appendChild(mainText);
             row.appendChild(subWrapper);
+            subText.classList.add('invisible-ghost');
             container.appendChild(row);
-
-            setTimeout(() => {
-                if (subText.offsetWidth > subWrapper.offsetWidth) {
-                    subText.classList.add('scrolling');
-                }
-            }, 50);
+            if (subText.offsetWidth > subWrapper.offsetWidth) {
+                subText.classList.add('scrolling');
+            }
+            subText.classList.remove('invisible-ghost');
         });
 
         for (let i = visible.length; i < this.pageSize; i++) {
@@ -422,13 +425,12 @@ class Dashboard {
             subWrapper.appendChild(subText);
             row.appendChild(mainText);
             row.appendChild(subWrapper);
+            subText.classList.add('invisible-ghost');
             container.appendChild(row);
-
-            setTimeout(() => {
-                if (subText.offsetWidth > subWrapper.offsetWidth) {
-                    subText.classList.add('scrolling');
-                }
-            }, 50);
+            if (subText.offsetWidth > subWrapper.offsetWidth) {
+                subText.classList.add('scrolling');
+            }
+            subText.classList.remove('invisible-ghost');
         });
 
         for (let i = visible.length; i < this.pageSize; i++) {
@@ -471,13 +473,25 @@ class Dashboard {
 
 new Dashboard();
 async function fetchData(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) return null;
-        return await response.json();
-    } catch (e) {
-        console.error(`Failed to fetch ${url}`, e);
-        return null;
+    while (true) {
+        try {
+            const response = await fetch(url);
+            // If server returns 502 Bad Gateway, retry immediately (unlimited attempts)
+            if (response.status === 502) {
+                console.warn(`Received 502 for ${url}, retrying...`);
+                continue;
+            }
+            if (!response.ok) {
+                // other non-OK responses are treated as failure (no retry)
+                console.error(`Fetch failed for ${url} with status ${response.status}`);
+                return null;
+            }
+            return await response.json();
+        } catch (e) {
+            // network or other fetch error: log and return null
+            console.error(`Failed to fetch ${url}`, e);
+            return null;
+        }
     }
 }
 
@@ -590,4 +604,3 @@ function processDelays(activeVehiclesData, bypassingVehicleIds) {
 </script>
 </body>
 </html>
-
