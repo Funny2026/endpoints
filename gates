@@ -126,7 +126,7 @@ header {
 }
 
 .scrolling {
-    animation: scroll-text 4s linear infinite;
+    animation: scroll-text 5s linear infinite;
     padding-left: 100%;
 }
 
@@ -590,3 +590,4 @@ function processDelays(activeVehiclesData, bypassingVehicleIds) {
 </script>
 </body>
 </html>
+
