@@ -63,7 +63,6 @@ body {
     width: 100%;
     height: 100%;
     aspect-ratio: 16 / 9;
-    border: 2px solid var(--border-color);
 }
 
 .column {
@@ -84,7 +83,7 @@ header {
     text-align: left;
     padding: 1rem;
     border-bottom: 2px solid var(--border-color);
-    background: #111;
+    background: #000;
 }
 
 .table-container {
@@ -123,7 +122,7 @@ header {
 .sub-text {
     font-size: 0.9rem;
     display: inline-block;
-    color: #CCC;
+    color: #E0E0E0;
 }
 
 .scrolling {
@@ -497,47 +496,62 @@ function processBypasses(tripsData, tripCodesData) {
     if (!tripsData?.commitmentTrip) return [];
 
     tripsData.commitmentTrip.forEach(trip => {
-        let stops = [...trip.stop];
+        // 1. Filter out stops that have "isStopping"="0"
+        const activeStops = trip.stop.filter(s => s.isStopping === "1");
+        if (activeStops.length < 2) return;
 
-        // 1. Trim start and end parts that have "isCancelled": "1"
-        let start = 0;
-        while (start < stops.length && stops[start].isCancelled === "1") start++;
-        let end = stops.length - 1;
-        while (end >= 0 && stops[end].isCancelled === "1") end--;
-
-        if (start > end) return; // Entire trip cancelled or empty
-        stops = stops.slice(start, end + 1);
-
-        // 2. Remove elements that have "isStopping": "0"
-        // 3. For remaining stops that have "isCancelled": "1", it is considered a bypassing station.
-        stops.forEach(stop => {
-            if (stop.isStopping === "1" && stop.isCancelled === "1") {
-                // Find line and stop code for this atlsId
-                let lineCode = "";
-                let stopCode = "";
-                
-                tripCodesData.forEach(l => {
-                    const foundStop = l.stops.find(s => s.atlsId === stop.id);
-                    if (foundStop) {
-                        lineCode = l.code;
-                        stopCode = foundStop.code;
-                    }
-                });
-
-                let existing = bypassResults.find(r => r.atlsId === stop.id);
-                if (!existing) {
-                    existing = { 
-                        stationName: stop.name, 
-                        atlsId: stop.id, 
-                        vehicles: new Set(),
-                        lineCode,
-                        stopCode
-                    };
-                    bypassResults.push(existing);
-                }
-                existing.vehicles.add(trip.tripNumber);
+        // 2. Find respective vehicle "patternCode" and line info in tripcodes.json
+        let patternCode = null;
+        let lineData = null;
+        for (const line of tripCodesData) {
+            const tripMatch = line.trips.find(t => t.number === trip.tripNumber);
+            if (tripMatch) {
+                patternCode = tripMatch.patternCode;
+                lineData = line;
+                break;
             }
-        });
+        }
+        if (!patternCode || !lineData) return;
+
+        // 3. Determine scheduled route stops for this patternCode
+        const route = lineData.routes.find(r => r.patternCode === patternCode);
+        if (!route) return;
+
+        // 4. Map active stop numeric IDs to scheduled stopOrder
+        const activeStopOrders = activeStops
+            .map(s => {
+                const routeStop = route.stops.find(rs => rs.atlsId === s.id);
+                return routeStop ? routeStop.stopOrder : null;
+            })
+            .filter(order => order !== null)
+            .sort((a, b) => a - b);
+
+        if (activeStopOrders.length < 2) return;
+
+        const minOrder = activeStopOrders[0];
+        const maxOrder = activeStopOrders[activeStopOrders.length - 1];
+
+        // 5. Check for missing (skipped) order numbers in between
+        for (let i = minOrder + 1; i < maxOrder; i++) {
+            if (!activeStopOrders.includes(i)) {
+                // This order is missing -> it's a bypassed station
+                const skippedStop = route.stops.find(rs => rs.stopOrder === i);
+                if (skippedStop) {
+                    let existing = bypassResults.find(r => r.atlsId === skippedStop.atlsId);
+                    if (!existing) {
+                        existing = {
+                            stationName: skippedStop.name,
+                            atlsId: skippedStop.atlsId,
+                            vehicles: new Set(),
+                            lineCode: lineData.code,
+                            stopCode: skippedStop.code
+                        };
+                        bypassResults.push(existing);
+                    }
+                    existing.vehicles.add(trip.tripNumber);
+                }
+            }
+        }
     });
 
     return bypassResults;
