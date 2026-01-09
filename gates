@@ -477,7 +477,7 @@ async function fetchData(url) {
         try {
             const response = await fetch(url);
             // If server returns 502 Bad Gateway, retry immediately (unlimited attempts)
-            if (response.status === 502) {
+            if (response.status === 502 || response.status === 400) {
                 console.warn(`Received 502 for ${url}, retrying...`);
                 continue;
             }
@@ -496,9 +496,21 @@ async function fetchData(url) {
 }
 
 function formatTime(seconds) {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m} mins ${s} secs`;
+    const m = Math.floor(Math.abs(seconds) / 60);
+    const s = Math.abs(seconds) % 60;
+    if (seconds == 0) {
+        return "On time | À l'heure";
+    }
+    let resultStr = ""
+    if (seconds > -60 && seconds < 60) {
+        resultStr = `${s} sec${s == 1 ? "" : "s"}`;
+    } else {
+        resultStr = `${m} min${m == 1 ? "" : "s"} ${s} sec${s == 1 ? "" : "s"}`;
+    }
+    if (seconds < 0) {
+        resultStr = "Early | Début " + resultStr;
+    }
+    return resultStr;
 }
 
 /**
@@ -603,14 +615,14 @@ function processDelays(activeVehiclesData, bypassingVehicleIds) {
     if (!activeVehiclesData?.trip) return [];
 
     return activeVehiclesData.trip
-        .filter(v => parseInt(v.delaySeconds) >= 120)
+        .filter(v => parseInt(v.delaySeconds) >= 120 || bypassingVehicleIds.has(v.tripNumber))
         .map(v => {
             const delay = parseInt(v.delaySeconds);
             let color = "white";
             
             if (bypassingVehicleIds.has(v.tripNumber)) {
                 color = "red";
-            } else if (delay >= 600) {
+            } else if (v.delayMemo || v.delayMemo_fr) {
                 color = "orange";
             } else if (delay >= 300) {
                 color = "yellow";
