@@ -200,7 +200,7 @@
     }
 
     #toggle-buttons-container {
-      display: block;
+      display: flex;
       gap: 0.5rem;
       margin-top: 0.5rem;
       align-items: center;
@@ -228,7 +228,7 @@
     }
 
     .result-emoji {
-      font-size: 120px;
+      font-size: 140px;
       margin: 0 10px;
     }
 
@@ -406,33 +406,41 @@
       });
 
       async function fetchWithTimeoutAndRetry(url, body) {
+        // This helper will retry on network/timeout errors, but will return a
+        // { status, data } object when the server responds. In particular,
+        // a 500 response will be returned as { status: 500 } so callers can
+        // decide how to handle it.
         while (true) {
-          for (let c = 0; c < 1;) {
-              try {
-                  const controller = new AbortController();
-                  const timeoutId = setTimeout(() => controller.abort(), 10000);
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-                  const response = await fetch(url, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(body),
-                      signal: controller.signal,
-                  });
+            const response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+              signal: controller.signal,
+            });
 
-                  clearTimeout(timeoutId);
+            clearTimeout(timeoutId);
 
-                  if (response.status !== 200) {
-                      throw new Error(`HTTP error! status: ${response.status}`);
-                  }
-                  
-                  const data = await response.json();
-                  c++;
-                  return data;
+            if (response.status === 500) {
+              // Return 500 to caller so they can choose behavior (continue or abort).
+              return { status: 500 };
+            }
 
-              } catch (error) {
-                  cacheEl.textContent = "An error occurred, try reconnecting.";
-                  await new Promise(resolve => setTimeout(resolve, 1)); // Wait before retrying
-              }
+            if (response.status !== 200) {
+              // For other non-200 statuses, treat as transient and retry.
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return { status: 200, data };
+
+          } catch (error) {
+            cacheEl.textContent = "An error occurred, try reconnecting.";
+            // Small backoff before retrying
+            await new Promise(resolve => setTimeout(resolve, 1));
           }
         }
       }
@@ -473,7 +481,12 @@
                     { prev: "rock", guess: getString(generationCount), gid: gameId }
                 );
 
-                if (!response1.data.guess_wins) {
+                // If server returned 500, treat this generation attempt as failed and try next.
+                if (response1.status === 500) {
+                    generationCount++;
+                    continue;
+                }
+                if (!response1.data.data.guess_wins) {
                     generationCount++;
                     continue; 
                 }
@@ -484,7 +497,13 @@
                     { prev: getString(generationCount), guess: guess2, gid: gameId }
                 );
 
-                if (!response2.data.guess_wins) {
+                // If server returned 500, treat this generation attempt as failed and try next.
+                if (response2.status === 500) {
+                    generationCount++;
+                    continue;
+                }
+
+                if (!response2.data.data.guess_wins) {
                     generationCount++;
                     continue;
                 }
@@ -494,9 +513,16 @@
                     "https://www.whatbeatsrock.com/api/vs", 
                     { prev: guess2, guess: guess1, gid: gameId }
                 );
-                
-                const finalData = response3.data;
-                const guess2Emoji = response2.data.guess_emoji || "🤷‍♂️";
+
+                // If server returned 500 on the final comparison, stop the generation loop
+                // and show an error so we don't loop indefinitely.
+                if (response3.status === 500) {
+                    reasonEl.textContent = "An error occurred. Please try again.";
+                    break; // exit the while(true) generation loop
+                }
+
+                const finalData = response3.data.data;
+                const guess2Emoji = response2.data.data.guess_emoji || "🤷‍♂️";
 
                 questionEl.innerHTML = `${guess1Raw} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2Raw}`;
                 rawLinkEl.innerHTML = `${guess2Raw} with ${guess1Raw}`;
@@ -507,13 +533,13 @@
                   if (generationCount == 1) {
                     cacheEl.textContent = `Cached ${finalData.cache_count} times`;
                   } else {
-                    cacheEl.textContent = `Cached ${finalData.cache_count} times in ${generationCount} guess attempts`;
+                    cacheEl.textContent = `Cached ${finalData.cache_count} times, Taken ${generationCount} generations`;
                   }
                 } else {
                   if (generationCount == 1) {
                     cacheEl.textContent = ""
                   } else {
-                    cacheEl.textContent = `${generationCount} guess attempts`;
+                    cacheEl.textContent = `Taken ${generationCount} generations`;
                   }
                 }
                 
