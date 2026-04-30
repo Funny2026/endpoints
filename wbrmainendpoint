@@ -531,13 +531,13 @@
 
                 const finalData = response3.data.data;
                 const guess2Emoji = response2.data.data.guess_emoji || "🤷‍♂️";
-                const isInputModded = guess2EIQstring != guess2 || guess1EIQstring != guess1;
+                const isInputModded = guess2EIQstring != guess2Raw || guess1EIQstring != guess1Raw;
               
                 questionEl.textContent = `${guess1EIQstring} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2EIQstring}`;
                 rawLinkEl.textContent = `${guess2EIQstring} with ${guess1EIQstring}`;
                 emojiEl.innerHTML = `<span class="result-emoji">${finalData.guess_emoji || "🤷‍♂️"}</span><span style="font-size: 40px">${finalData.guess_wins ? "🟩" : "🟥"}</span><span class="result-emoji">${guess2Emoji}</span>`;
                 reasonEl.textContent = finalData.reason;
-                rawTextEl.textContent = isInputModded ? `Raw input language: ${guess2} with ${guess1}` : '';
+                rawTextEl.textContent = isInputModded ? `Raw input language: ${guess2Raw} with ${guess1Raw}` : '';
 
                 if (finalData.cached) {
                   if (generationCount == 1) {
