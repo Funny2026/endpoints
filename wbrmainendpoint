@@ -90,9 +90,9 @@
       }
     }
 
-    #score {
-      font-size: 1rem;
-      margin-bottom: 1rem;
+    #raw-text {
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
       color: #888;
     }
 
@@ -102,10 +102,6 @@
       font-size: 1.05rem;
       margin-bottom: 0.5rem;
       color: #555;
-    }
-
-    #tutorial-hint {
-      color: #888
     }
 
     #guess-input1,
@@ -269,6 +265,7 @@
       <div id="raw-link"></div>
       <div id="cache"></div>
       <div id="reason"></div>
+      <div id="raw-text"></div>
       <div id="guess-container">
         <div id="emoji">🆚</div>
       </div>
@@ -302,6 +299,7 @@
       const rawLinkEl = document.getElementById("raw-link");
       const cacheEl = document.getElementById("cache");
       const reasonEl = document.getElementById("reason");
+      const rawTextEl = document.getElementById("raw-text");
       const guessForm = document.getElementById("guess-form");
       const guessInput1 = document.getElementById("guess-input1");
       const guessInput2 = document.getElementById("guess-input2");
@@ -314,6 +312,8 @@
 
       let isCompress1 = false;
       let isCompress2 = false;
+
+      function EIQ(e){let t=e.split('"'),n=[];for(let o=0;o<t.length;o++)o%2==0?n.push(t[o]):n.push(unicodeEncode(t[o]));return n.join("")}
 
       function unicodeEncode(input) {
         const padding = '\u0000';
@@ -452,15 +452,21 @@
         let guess2Raw = guessInput2.value.trim();
         let guess1;
         let guess2;
+        let guess1EIQstring;
+        let guess2EIQstring;
         if (isCompress1) {
           guess1 = unicodeEncode(guess1Raw);
+          guess1EIQstring = guess1Raw;
         } else {
-          guess1 = guess1Raw;
+          guess1 = EIQ(guess1Raw);
+          guess1EIQstring = guess1Raw.replace(/"/g,"");
         }
         if (isCompress2) {
           guess2 = unicodeEncode(guess2Raw);
+          guess2EIQstring = guess2Raw;
         } else {
-          guess2 = guess2Raw;
+          guess2 = EIQ(guess2Raw);
+          guess2EIQstring = guess2Raw.replace(/"/g,"");
         }
 
         if (!guess1 || !guess2 || guess1 == guess2) return;
@@ -468,6 +474,8 @@
         setLoading(true);
         reasonEl.textContent = "";
         rawLinkEl.textContent = "";
+        rawTextEl.textContent = "";
+        
         
         let generationCount = 1;
         try {
@@ -523,11 +531,13 @@
 
                 const finalData = response3.data.data;
                 const guess2Emoji = response2.data.data.guess_emoji || "🤷‍♂️";
-
-                questionEl.innerHTML = `${guess1Raw} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2Raw}`;
-                rawLinkEl.innerHTML = `${guess2Raw} with ${guess1Raw}`;
+                const isInputModded = guess2EIQstring != guess2 || guess1EIQstring != guess1;
+              
+                questionEl.textContent = `${guess1EIQstring} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2EIQstring}`;
+                rawLinkEl.textContent = `${guess2EIQstring} with ${guess1EIQstring}`;
                 emojiEl.innerHTML = `<span class="result-emoji">${finalData.guess_emoji || "🤷‍♂️"}</span><span style="font-size: 40px">${finalData.guess_wins ? "🟩" : "🟥"}</span><span class="result-emoji">${guess2Emoji}</span>`;
                 reasonEl.textContent = finalData.reason;
+                rawTextEl.textContent = isInputModded ? `Raw input language: ${guess2} with ${guess1}` : '';
 
                 if (finalData.cached) {
                   if (generationCount == 1) {
