@@ -168,7 +168,7 @@
          width: auto;
          color:Black;
          padding: 1px;
-         background-color: darkgray;
+         background-color: #FF8080;
          font-family: Arial Narrow, Arial, sans-serif;
          font-size: 10px;
          font-weight: bold;
@@ -1668,7 +1668,7 @@ function reloadAllTrips(){
 </script>
 </head>
 <span id="err"></span>
-<div id="map_canvas" style="z-index:0;"></div>
+<div id="map_canvas" style="z-index:0;zoom:50%"></div>
 
 
 </body>
