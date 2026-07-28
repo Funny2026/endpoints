@@ -967,7 +967,7 @@ function getStationStatusInfo(stationName, lstationId, lstopCd) {
         dataType: "xml",
         cache: false,
         async: false,
-        timeout: 10000,
+        timeout: 30000,
         success: function (data, textStatus, XMLHttpRequest) {
             var noTripKey = 'NoTrip_';
             var destination;
@@ -1028,7 +1028,7 @@ function fetchTripLocationsForServices(serviceIds, lang) {
                 dataType: "xml",
                 cache: false,
                 async: true,
-                timeout: 10000
+                timeout: 30000
             });
         })
     ).then((results) => {
@@ -1095,7 +1095,7 @@ function moveAllObj(moveMode) {
     isAjaxReturned = false;
 
     if (multiServiceLangCall) {
-        const serviceIdsForLangCall = ['65', '31', '09', '01', '21', '61', '71'];
+        const serviceIdsForLangCall = ['11', '65', '31', '09', '01', '21', '61', '71'];
 
         fetchTripLocationsForServices(serviceIdsForLangCall, lang)
             .then((mergedXml) => {
@@ -1128,7 +1128,7 @@ function moveAllObj(moveMode) {
             dataType: "xml",
             cache: false,
             async: true,
-            timeout: 10000,
+            timeout: 30000,
             success: tripDataReturn,
             error: function (data, textStatus, XMLHttpRequest) {
                 var errStr = "Error requesting trip data.";
@@ -1415,7 +1415,7 @@ function moveObj (key, obj, isBus) {
         isOverlapping = ($(obj).attr('IsOverlapping')) == 'true'? true: false;
     } catch (e) {}
 	try{
-        hasMemo = ($(obj).attr('delayMemo')) || null;
+        hasMemo = ($(obj).attr('DelayMemo')) || null;
     } catch (e) {}
 
     if (tripNum == '') return;
@@ -1467,7 +1467,6 @@ function moveObj (key, obj, isBus) {
         tBox = null;
         delete tBox;
     }
-    console.log(delay+"|"+isMoving);
     if (isPublic == true && !isBus){
         tripLabelDesc = tripName + formatStop(delay, isMoving, hasMemo);
         //tripLabelLength = tripLabel.length * 8;
@@ -1480,21 +1479,20 @@ function moveObj (key, obj, isBus) {
 
     //tripLabel = "<span id='trainIcon' style='length:" + tripLabelLength + "px;'>" + tripLabel + "</span>";
     vMarker = findMarker(key);
+	let labelClassMarker = "trainMarker";
+	if (window.affectedTrips && window.affectedTrips.includes(tripNum)) {
+		labelClassMarker = "trainMarkerAffected";
+	} else if (hasMemo) {
+		labelClassMarker = "trainMarkerMemo";
+	} else if (delay >= 300) {
+		labelClassMarker = "trainMarkerDelay";
+	} else if (delay >= 120) {
+		labelClassMarker = "trainMarkerMinor";
+	}
     if (vMarker == null) {
         //trace('Trip Added: ' + tripNum + '(' + tripName + '), trainmarker count:' + allMarker.length);
         var marker;
         if (showTrainLabel){
-            delay = delay;
-			let labelClassMarker = "trainMarker";
-			if (window.affectedTrips && window.affectedTrips.includes(tripNum)) {
-				labelClassMarker = "trainMarkerAffected";
-    		} else if (hasMemo) {
-				labelClassMarker = "trainMarkerMemo";
-			} else if (delay >= 300) {
-				labelClassMarker = "trainMarkerDelay";
-			} else if (delay >= 120) {
-				labelClassMarker = "trainMarkerMinor";
-			}
             marker = new MarkerWithLabel_Top({
                 position: trainPos,
                 draggable: false,
@@ -1528,7 +1526,8 @@ function moveObj (key, obj, isBus) {
         }        
         if (showTrainLabel) {
             vMarker.marker.set("labelContent", tripLabelDesc);
-            //vMarker.marker.set("labelStyle", '{width: ' + tripLabelLength + '}');
+            vMarker.marker.set("labelStyle", '{width: ' + tripLabelLength + '}');
+			vMarker.marker.set("labelClass", labelClassMarker);
         }
         vMarker.marker.setPosition(trainPos);
         //vMarker.marker.set("labelClass", "train");
