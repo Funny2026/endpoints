@@ -1,0 +1,1675 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="Head1">
+    <script type="text/javascript" src="/GoTracker/web/Scripts/jquery-1.7.min.js"></script>
+<title>
+
+</title></head>
+<body style="height:100%;">
+    <script type="text/javascript" language="javascript">
+        function raiseError(err) {
+            alert(err);
+        }
+    </script>
+    <form method="post" action="./GoMap.aspx?mode=Public&amp;followtrain=false&amp;Language=en&amp;stationId=0&amp;Service=01&amp;IncludeEquipmentTrip=false" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="4a+VbxFgKCh+pMwC6sePyA0cihFJqDu3RpuYwgBK/ZC9wWzBMF/E0awcmhZbtnpw+x48N8qVgDzJorRCY22177USu8w=" />
+</div>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="0D9E7435" />
+</div>
+    <div>
+        
+    </div>
+    </form>
+    
+<head id="MapHead">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0px; padding: 0px }
+      #map_canvas { height: 100% }
+      h7 {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            width:100%;
+            font-variant: normal;
+            font-weight: bold;
+            font-size:14px;
+            text-align: left;
+            text-shadow: rgba(0, 0, 0, 0.6) 0px -1px 0;
+            text-overflow: ellipsis;
+            color: #FFFFFF;
+            background-color: #7388a5;
+            border: none;
+            z-index: 0;
+        }
+
+       .sTbl{
+            width:100%; 
+            padding: 0; 
+            margin: 0; 
+            border-style:none; 
+            border-width:0px; 
+            border-spacing:0; 
+            border-collapse:collapse
+       }
+       .trainMarker 
+       {
+         width: auto;
+         color:Blue;
+         padding: 2px;
+         background-color: white;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 14px;
+         font-weight: bold;
+         text-align: center;
+         vertical-align: middle;
+         border: 2px solid black;
+         white-space: nowrap;
+         filter: alpha(opacity=100);
+         -moz-opacity:1;
+         -khtml-opacity: 1;
+         opacity: 1;
+       }
+	   .trainMarkerAffected
+       {
+         width: auto;
+         color:Blue;
+         padding: 2px;
+         background-color: red;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 14px;
+         font-weight: bold;
+         text-align: center;
+         vertical-align: middle;
+         border: 2px solid black;
+         white-space: nowrap;
+         filter: alpha(opacity=100);
+         -moz-opacity:1;
+         -khtml-opacity: 1;
+         opacity: 1;
+       }
+	   .trainMarkerMemo
+       {
+         width: auto;
+         color:Blue;
+         padding: 2px;
+         background-color: orange;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 14px;
+         font-weight: bold;
+         text-align: center;
+         vertical-align: middle;
+         border: 2px solid black;
+         white-space: nowrap;
+         filter: alpha(opacity=100);
+         -moz-opacity:1;
+         -khtml-opacity: 1;
+         opacity: 1;
+       }
+	   .trainMarkerDelay
+       {
+         width: auto;
+         color:Blue;
+         padding: 2px;
+         background-color: yellow;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 14px;
+         font-weight: bold;
+         text-align: center;
+         vertical-align: middle;
+         border: 2px solid black;
+         white-space: nowrap;
+         filter: alpha(opacity=100);
+         -moz-opacity:1;
+         -khtml-opacity: 1;
+         opacity: 1;
+       }
+	   .trainMarkerMinor
+       {
+         width: auto;
+         color:Blue;
+         padding: 2px;
+         background-color: lightgray;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 14px;
+         font-weight: bold;
+         text-align: center;
+         vertical-align: middle;
+         border: 2px solid black;
+         white-space: nowrap;
+         filter: alpha(opacity=100);
+         -moz-opacity:1;
+         -khtml-opacity: 1;
+         opacity: 1;
+       }
+       .stationMarker
+       {
+         width: auto;
+         color:Black;
+         padding: 1px;
+         background-color: white;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 10px;
+         font-weight: bold;
+         border: 1px solid black;
+         white-space: nowrap;
+         text-align: center;
+         z-index:2;
+       }
+	   .stationMarkerLocked
+       {
+         width: auto;
+         color:Black;
+         padding: 1px;
+         background-color: darkgray;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 10px;
+         font-weight: bold;
+         border: 1px solid black;
+         white-space: nowrap;
+         text-align: center;
+         z-index:2;
+       }
+	   .stationMarkerLockedActive
+       {
+         width: auto;
+         color:Black;
+         padding: 1px;
+         background-color: red;
+         font-family: Arial Narrow, Arial, sans-serif;
+         font-size: 10px;
+         font-weight: bold;
+         border: 1px solid black;
+         white-space: nowrap;
+         text-align: center;
+         z-index:2;
+       }
+       .tripLabel {
+         color: black;
+         font-family: "Arial", sans-serif;
+         font-size: 12px;
+         font-weight: bold;
+         border:none;
+         white-space: nowrap;
+       }
+       
+       .tblHeader {
+         color: white;
+         font-family: "Arial", sans-serif;
+         font-size: 12px;
+         font-weight: normal;
+         background-color: #454545;
+         white-space: nowrap;
+         border-top: 1px solid black;
+         border-bottom: 1px solid black;
+         border-collapse:separate;
+         width:99%;
+       }
+       
+       .stopStatus {
+         color: black;
+         font-family: "Arial", sans-serif;
+         font-size: 10px;
+         font-weight: normal;
+         white-space: nowrap;
+         width:99%
+       }
+       
+       .stationInfo
+       {
+           display:block;
+       }
+       
+       #legend
+       {
+	    padding: 2px;
+	    font-family: Arial,sans-serif;
+	    font-size: 12px;
+	    text-align: center;
+	    background-color: #ffffff;
+	    border-color: rgb(169, 187, 223);
+	    border-style: solid;
+	    border-width: 1px;
+	    border-radius: 2px 2px;
+	    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.347656);
+	    margin: 5px 5px 5px 5px; // from edge of map
+	    max-width: 40%;
+	    opacity: 0.8; // works on BB 6
+	    filter: alpha(opacity=80); // for IE - and the BB 5
+       }
+
+       #options
+       {
+	    padding: 2px;
+	    font-family: Arial,sans-serif;
+	    font-size: 12px;
+	    text-align: center;
+	    background-color: rgb(243, 243, 243);
+	    border-color: rgb(169, 187, 223);
+	    border-style: solid;
+	    border-width: 1px;
+	    border-radius: 2px 2px;
+	    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.347656);
+	    margin: 5px 5px 5px 5px; // from edge of map
+       }
+       .Background
+        {
+            position:fixed;
+            left: 48%;
+            top: 48%;
+            z-index: 1001;
+            width: 100%;
+            height: 100%;             
+            filter: alpha(opacity=40);     
+            -moz-opacity:0.4;
+            -khtml-opacity: 0.4;
+            opacity: 0.4;    
+            background-image: url(../Images/updateprogress1.gif);   
+            background-repeat:no-repeat;
+            background-position: center center;  
+            float:left; 
+        }
+
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&callback=initializeMaps&key=AIzaSyAB4-ibpSep_TQKBB99Tbal6eyn96qo43Q" ></script>
+    <script type="text/javascript" src="/GoTracker/web/Scripts/markerwithlabel.js"></script>
+    <script type="text/javascript" src="/GoTracker/web/Scripts/markerwithlabel_Top.js"></script>
+    <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script>-->
+<script type="text/javascript">
+let codesData;
+let isLoaded = false;
+let lastSyncedTime;
+let deltaSeconds = -1;
+class Dashboard {
+    constructor() {
+        this.lockedStationsPage = 0;
+        this.delayPage = 0;
+        this.pageSize = 6;
+        this.cycleTime = 5000;
+        this.refreshInterval = 1000;
+
+        this.lockedStations = [];
+        this.vehicleDelays = [];
+        this.alllockedStationVehicleIds = [];
+
+        // flag to indicate whether a fetch cycle is in progress
+        this.fetchInProgress = false;
+
+        // indicates whether initial main files have finished loading
+        this.initialLoaded = false;
+
+        // indicates whether automatic cycling has been started
+        this.cyclingStarted = false;
+
+        this.init();
+    }
+
+    async init() {
+        // show loading text immediately on both panels until first successful main load
+        // Do NOT start cycling yet — wait until the initial main files have loaded
+        this.refreshLoop();
+    }
+
+    async refreshLoop() {
+        while (true) {
+            if (!this.fetchInProgress) {
+                await this.loadAndProcess();
+            }
+            await new Promise(resolve => setTimeout(resolve, this.refreshInterval));
+        }
+    }
+
+    async loadAndProcess() {
+        this.fetchInProgress = true;
+        try {
+            // Step 1: Load main files
+            const [LW, LE, BR, GT, ST, RH, MI, tripCodes] = await Promise.all([
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Lakeshore%20West'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Lakeshore%20East'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Barrie'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Kitchener'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Stouffville'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Richmond%20Hill'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Schedule/Today/Corridor/Milton'),
+            fetchData('https://www.gotracker.ca/gotracker/mobile/proxy/web/Info/TripPatterns/Train')
+            ]);
+
+            if (!LW || !LE || !BR || !GT || !ST || !RH || !MI || !tripCodes) {
+                console.error("Critical data missing");
+                return;
+            }
+
+            // mark initial load completed when all three main files are present
+            this.initialLoaded = true;
+
+            codesData = tripCodes;
+            // Step 2: Get locked station candidates
+            const combinedTrips = LW.commitmentTrip.concat(LE.commitmentTrip, BR.commitmentTrip, GT.commitmentTrip, ST.commitmentTrip, RH.commitmentTrip, MI.commitmentTrip);
+            const rawLockedStations = processLockedStations(combinedTrips, tripCodes);
+            this.alllockedStationVehicleIds = [];
+            rawLockedStations.forEach(b => b.vehicles.forEach(v => this.alllockedStationVehicleIds.push(v)));
+
+            // Step 3: Check "Active" status for locked stations
+            const activeLockedStations = await Promise.all(rawLockedStations.map(async (b) => {
+            const path = `https://www.gotracker.ca/gotracker/mobile/proxy/web/Messages/Signage/Rail/${b.lineCode}/${b.stopCode}`;
+                const lineData = await fetchData(path);
+                
+                let isActive = false;
+                let activeVehiclesAtStop = new Set();
+
+                if (lineData?.directions) {
+                    lineData.directions.forEach(dir => {
+                        dir.tripMessages.forEach(msg => {
+                            if (b.vehicles.has(msg.tripName)) {
+                                isActive = true;
+                                activeVehiclesAtStop.add(msg.tripName);
+                            }
+                        });
+                    });
+                }
+
+                return {
+                    ...b,
+                    isActive,
+                    activeVehiclesAtStop
+                };
+            }));
+
+            this.lockedStations = activeLockedStations.sort((a, b) => {
+                return String(a.stationName).localeCompare(String(b.stationName), undefined, { sensitivity: 'base' });
+            });
+
+            // Reset pagination if content changed significantly? 
+            // For now just render.
+            this.render();
+            lastSyncedTime = new Date().getTime();
+        } catch (e) {
+            console.error("Error during loadAndProcess:", e);
+        } finally {
+            this.fetchInProgress = false;
+        }
+    }
+
+    render() {
+        isLoaded = true;
+        this.renderLockedStations();
+    }
+
+    renderLockedStations() {
+		let c1 = window.lockedStationIds || [], c2 = window.activeLockedStationIds || [], c3 = window.affectedTrips || [];
+        window.lockedStationIds = this.lockedStations.map(i=>i.atlsId);
+        window.activeLockedStationIds = this.lockedStations.filter(i=>i.isActive).map(i=>i.atlsId);
+        window.affectedTrips = this.alllockedStationVehicleIds;
+		if (JSON.stringify(c1) != JSON.stringify(window.lockedStationIds) || JSON.stringify(c2) != JSON.stringify(window.activeLockedStationIds) || JSON.stringify(c3) != JSON.stringify(window.affectedTrips)) {
+			plotAllStations();
+		}
+    }
+}
+window.dashboard = new Dashboard();
+/**
+ * Fetch with per-endpoint timeout and unlimited retries until a successful JSON response is obtained.
+ * Uses AbortController to cancel requests that exceed the endpoint-specific timeout.
+ */
+function getTimeoutForUrl(url) {
+    // Define timeouts in milliseconds based on path substrings
+    if (url.includes('/Schedule/Today/Corridor/Lakeshore%20West')) return 15000; // 15s
+    if (url.includes('/Schedule/Today/Corridor/Lakeshore%20East')) return 15000; // 15s
+    if (url.includes('/Schedule/Today/Corridor/Barrie')) return 15000; // 15s
+    if (url.includes('/Schedule/Today/Corridor/Kitchener')) return 15000; // 15s
+    if (url.includes('/Schedule/Today/Corridor/Stouffville')) return 15000; // 15s
+    if (url.includes('/Schedule/Today/Corridor/Richmond%20Hill')) return 8000; // 8s
+    if (url.includes('/Schedule/Today/Corridor/Milton')) return 10000; // 10s
+    if (url.includes('/Info/TripPatterns/Train')) return 5000; // 5s
+    if (url.includes('/Messages/Signage/Rail/')) return 1000; // 1s
+    // default fallback
+    return 8000;
+}
+
+async function fetchWithTimeout(url, ms, signal) {
+    const controller = new AbortController();
+    const combinedSignal = signal || controller.signal;
+    const timeout = setTimeout(() => controller.abort(), ms);
+    try {
+        const response = await fetch(url, { signal: combinedSignal });
+        clearTimeout(timeout);
+        return response;
+    } catch (err) {
+        clearTimeout(timeout);
+        throw err;
+    }
+}
+
+async function fetchData(url) {
+    while (true) {
+        try {
+            const timeoutMs = getTimeoutForUrl(url);
+            let response;
+            try {
+                response = await fetchWithTimeout(url, timeoutMs);
+            } catch (e) {
+                // request timed out or aborted or network error - retry unlimited times
+                continue;
+            }
+
+            // If gateway errors or bad gateway - retry
+            if (response.status === 502 || response.status === 504 || response.status === 400) {
+                continue;
+            }
+
+            // For other non-ok statuses, also retry until success
+            if (!response.ok) {
+                continue;
+            }
+
+            // Try to parse JSON - if parsing fails, retry
+            try {
+                return await response.json();
+            } catch (e) {
+                continue;
+            }
+        } catch (e) {
+            // Swallow and retry indefinitely
+            continue;
+        }
+    }
+}
+
+/**
+ * Utility: find a stop name by numeric atlsId from tripCodes data.
+ * Returns the stop name string or null if not found.
+ */
+function getStopNameByAtlsId(atlsId) {
+    // Validate inputs
+    if (!codesData || atlsId === null || atlsId === undefined || atlsId === "") return null;
+
+    // Normalize for comparison: attempt numeric comparison first, otherwise compare as strings
+    const targetNum = Number(atlsId);
+    const useNumericCompare = !Number.isNaN(targetNum);
+
+    for (const line of codesData) {
+        if (!line.routes) continue;
+        for (const route of line.routes) {
+            if (!route.stops) continue;
+            for (const stop of route.stops) {
+                if (useNumericCompare) {
+                    if (Number(stop.atlsId) === targetNum) {
+                        return stop.name || null;
+                    }
+                } else {
+                    if (String(stop.atlsId) === String(atlsId)) {
+                        return stop.name || null;
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
+
+
+/**
+ * Logic for Locked Stations
+ *
+ * Two detection methods:
+ * 1) If a stop in the trip has isStopping="0" and a truthy schTrack value, treat that stop as locked (use the stop's provided name when available).
+ * 2) The original scheduled-missing-stops method: compare scheduled stopOrder numbers and any missing order between first and last active stops is locked.
+ */
+function processLockedStations(tripsData, tripCodesData) {
+    const lockedStationsResults = []; // { stationName, atlsId, vehicles: Set<string>, lineCode, stopCode }
+
+    tripsData.forEach(trip => {
+        // collect stops
+        let stops = trip.stop || [];
+
+       // Trim start and end array that have impossible values
+        let startIndex = 0;
+        while (startIndex < stops.length && (stops[startIndex].isStopping === "0" || stops[startIndex].isStopping === 0 || stops[startIndex].isStopping === false)) {
+            startIndex++;
+        }
+    
+        let endIndex = stops.length - 1;
+        while (endIndex >= startIndex && (stops[endIndex].isStopping === "0" || stops[endIndex].isStopping === 0 || stops[endIndex].isStopping === false)) {
+            endIndex--;
+        }
+    
+        stops = stops.slice(startIndex, endIndex + 1);
+        // active stops are those with isStopping === "1"
+        const activeStops = stops.filter(s => s.isStopping === "1");
+
+        // find pattern/line for this trip
+        let patternCode = null;
+        let lineData = null;
+        for (const line of tripCodesData) {
+            const tripMatch = line.trips.find(t => t.number === trip.tripNumber);
+            if (tripMatch) {
+                patternCode = tripMatch.patternCode;
+                lineData = line;
+                break;
+            }
+        }
+        if (!patternCode || !lineData) return;
+
+        const route = lineData.routes.find(r => r.patternCode === patternCode);
+        if (!route) return;
+
+        // 1) Handle stops explicitly marked as locked via isStopping="0" + schTrack truthy
+        const explicitLockedStations = stops.filter(s => s.isStopping === "0" && s.schTrack);
+        explicitLockedStations.forEach(s => {
+            // try to get route info by atlsId if available
+            const routeStop = route.stops.find(rs => rs.atlsId === s.id);
+            const atlsId = routeStop ? routeStop.atlsId : (s.id || null);
+            const name = s.name || (routeStop ? routeStop.name : 'Unknown');
+            const code = routeStop ? routeStop.code : (s.code || null);
+
+            let existing = lockedStationsResults.find(r => r.atlsId === atlsId && r.lineCode === lineData.code);
+            if (!existing) {
+                existing = {
+                    stationName: name,
+                    atlsId: atlsId,
+                    vehicles: new Set(),
+                    lineCode: lineData.code,
+                    stopCode: code
+                };
+                lockedStationsResults.push(existing);
+            }
+            existing.vehicles.add(trip.tripNumber);
+        });
+
+        // 2) Original method — determine missing scheduled stopOrder numbers between first and last active stops
+        const activeStopOrders = activeStops
+            .map(s => {
+                const routeStop = route.stops.find(rs => rs.atlsId === s.id);
+                return routeStop ? routeStop.stopOrder : null;
+            })
+            .filter(order => order !== null)
+            .sort((a, b) => a - b);
+
+        if (activeStopOrders.length < 2) return;
+
+        const minOrder = activeStopOrders[0];
+        const maxOrder = activeStopOrders[activeStopOrders.length - 1];
+
+        for (let i = minOrder + 1; i < maxOrder; i++) {
+            if (!activeStopOrders.includes(i)) {
+                const notOrderedStop = route.stops.find(rs => rs.stopOrder === i);
+                if (notOrderedStop) {
+                    let existing = lockedStationsResults.find(r => r.atlsId === notOrderedStop.atlsId && r.lineCode === lineData.code);
+                    if (!existing) {
+                        existing = {
+                            stationName: notOrderedStop.name,
+                            atlsId: notOrderedStop.atlsId,
+                            vehicles: new Set(),
+                            lineCode: lineData.code,
+                            stopCode: notOrderedStop.code
+                        };
+                        lockedStationsResults.push(existing);
+                    }
+                    existing.vehicles.add(trip.tripNumber);
+                }
+            }
+        }
+    });
+    return lockedStationsResults;
+}
+var delayStr = 'Delay';
+var speedStr = 'Speed';
+var stationLon = '-79.379456';
+var stationLat = '43.645218';
+var curr_stationId = '907';
+var unionStationId = '907';
+var zoomLevel = 11;
+var allowFollowTrain = false;
+var allowInternal = false;
+var staticStationMap = false;
+var javascriptDebugMsg = true;
+var isBusOnly = false;
+var isAjaxReturned = true;
+var htmlBR = '<br/>';
+var lineBreak = '\r\n';
+var firstLoad = true;
+var waiting = false;
+var stationLoaded = false;
+var panTrain = false;
+var hasMarker = false;
+var allMarker=[];
+var allMarkerKey=[];
+
+function measureText(pText, pClass) { 
+    var lDiv = document.createElement('lDiv'); 
+ 
+    document.body.appendChild(lDiv); 
+ 
+    lDiv.className = pClass;
+    lDiv.style.position = "absolute"; 
+    lDiv.style.left = -1000; 
+    lDiv.style.top = -1000; 
+ 
+    lDiv.innerHTML = pText; 
+ 
+    var lResult = { 
+        width: lDiv.clientWidth + 2, 
+        height: lDiv.clientHeight 
+    }; 
+ 
+    document.body.removeChild(lDiv); 
+    lDiv = null; 
+ 
+    return lResult; 
+} 
+
+function replaceAll(txt, replace, with_this) {
+  return txt.replace(new RegExp(replace, 'g'),with_this);
+}
+
+function trace(s){
+    try{
+        if (javascriptDebugMsg){
+            s = getCurrentTime() + ': ' + s;
+            if (console != null && console != undefined){
+                console.log(s)
+            }
+        }
+    }
+    catch(e){}
+}
+
+function getCurrentTime() {
+    var currentTime = new Date();
+    var hours = currentTime.getHours();
+    var minutes = currentTime.getMinutes();
+    if (minutes < 10) {
+        minutes = "0" + minutes;
+    }
+    var rtn = hours + ":" + minutes;
+    return rtn;
+}
+
+//$.extend({
+//    getUrlVars: function () {
+//        var vars = [], hash;
+//        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+//        for (var i = 0; i < hashes.length; i++) {
+//            hash = hashes[i].split('=');
+//            vars.push(hash[0]);
+//            vars[hash[0]] = hash[1];
+//        }
+//        return vars;
+//    },
+//    getUrlVar: function (name) {
+//        return $.getUrlVars()[name];
+//    }
+//});
+
+//var varsUrl = $.getUrlVars();
+var map;
+var gLon = 0, gLat = 0;
+var busMarker = new Object();
+//var trainMarker = new Object();
+var tripInfoWindow = new Object();
+var markerImgUrl = new Object();
+var pMarkerImg = new Object();
+
+markerImgUrl[1] = '/GoTracker/web/Images/trainMovingGreen.png';
+markerImgUrl[2] = '/GoTracker/web/Images/trainMovingRed.png';
+markerImgUrl[3] = '/GoTracker/web/Images/trainMovingRed.png';
+markerImgUrl[4] = '/GoTracker/web/Images/trainStopGreen.png';
+markerImgUrl[5] = '/GoTracker/web/Images/trainStopRed.png';
+markerImgUrl[6] = '/GoTracker/web/Images/trainStopRed.png';
+markerImgUrl[7] = '/GoTracker/web/Images/greenbus.png';
+markerImgUrl[8] = '/GoTracker/web/Images/bluebus.png';
+markerImgUrl[9] = '/GoTracker/web/Images/overlappingTrip.png';
+
+    //var goDataAPIurl = '/GoTracker/web/GODataAPIProxy.svc';
+    var goDataAPIurl = 'https://www.gotracker.ca/GoTracker/web/GODataAPIProxy.svc';    
+var goAVLAPIurl = 'http://hosdcsc01/Development/GOAVL/GOAVL.svc/web';
+var tripNodeName = "Locations";
+var tripId = "";
+var hastusTripId = "";
+var mode = "Public";
+var corridor = "Lakeshore West";
+var serviceId = "01";
+var isPublic = true;
+var showTrainLabel = true;
+var noTripDataReturnCount = 0;
+var bFollow = false;
+var runningTrainPos;
+var includeEquipmentTrip = 'false';
+var mapTripErrorRetryCount = 10;
+var mapTripErrorRetryInterval = 180000;
+var mapTripCurrentErrorCount = 0;
+
+$.each(markerImgUrl, function (key, value) {
+    pMarkerImg[key] = new google.maps.MarkerImage(value, null, null, new google.maps.Point(0, 41), null);
+});
+
+function vehMarker(myMarker, key){
+    this.marker = myMarker;
+    this.InfoWindow = null;
+    this.InfoWindowListener = null;
+    this.isValid = false;
+    this.key = key;
+}
+
+var l1 = 5, l2 = 10, l3 = 10;
+
+
+var optionsDiv = document.createElement('DIV');
+optionsDiv.setAttribute('id','options'); 
+
+FollowControl.prototype.follow_ = null;
+
+FollowControl.prototype.getFollow = function() {
+  return this.follow_;
+}
+FollowControl.prototype.setFollow = function(follow) {
+  this.follow_ = follow;
+}
+function FollowControl(map, div, follow) {
+
+    var controlDiv = div;
+    var control = this;
+
+    control.follow_ = follow;
+    controlDiv.style.padding = '5px';
+
+    var followUI = document.createElement('DIV');
+    if (!follow)
+        followUI.innerHTML = 'Click to follow this trip';
+    else
+        followUI.innerHTML = 'Click to stop following';
+
+    followUI.style.cursor = "pointer";
+
+    controlDiv.appendChild(followUI);
+
+    google.maps.event.addDomListener(followUI, 'click', function() {
+    control.setFollow( !control.getFollow() );
+	bFollow = control.folllow_;
+	if (control.follow_)
+	{
+        if (runningTrainPos != null && runningTrainPos != undefined)
+		    map.panTo(runningTrainPos);
+		followUI.innerHTML = 'Click to stop following';
+	}
+	else
+	{
+		followUI.innerHTML = 'Click to follow this trip';
+	}
+  });
+}
+
+function plotAllStations() {
+    var unionStationName = 'Union Station';
+    var unionStationLat = '43.645278';
+    var unionStationLon = '-79.380556';
+    var strStations = '[{"stop_name":"Bloomington - Train \u0026 Bus Station","stop_lat":"43.975949","stop_lon":"-79.397258","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/bm/station-details","stop_short_name":"BM","ATLS_LID":5048,"ATLS_LOCATIONLABEL":"BLOOMINGTON","stop_code":null,"isYard":"false"},{"stop_name":"Downsview Park - Train Station","stop_lat":"43.753719","stop_lon":"-79.478390","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/dw/station-details","stop_short_name":"DW","ATLS_LID":5044,"ATLS_LOCATIONLABEL":"DOWNSVIEW PARK","isYard":"false","stop_code":null},{"stop_name":"Gormley - Train \u0026 Bus Station","stop_lat":"43.941227","stop_lon":"-79.398833","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/go/station-details","stop_short_name":"GO","ATLS_LID":5041,"ATLS_LOCATIONLABEL":"GORMLEY","isYard":"false","stop_code":null},{"stop_name":"West Harbour - Train Station","stop_lat":"43.26745","stop_lon":"-79.869441","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/wr/station-details","stop_short_name":"WR","ATLS_LID":5035,"ATLS_LOCATIONLABEL":"WEST HARBOUR","isYard":"false","stop_code":null},{"stop_name":"Acton GO Station - Train Station","stop_lat":"43.63401","stop_lon":"-80.03487","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ac/station-details","stop_short_name":"AC","ATLS_LID":2100,"ATLS_LOCATIONLABEL":"ACTON","isYard":"false","stop_code":null},{"stop_name":"Agincourt GO Station - Train Station","stop_lat":"43.784801","stop_lon":"-79.284286","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ag/station-details","stop_short_name":"AG","ATLS_LID":39,"ATLS_LOCATIONLABEL":"AGINCOURT","isYard":"false","stop_code":null},{"stop_name":"Ajax GO Station - Train Station","stop_lat":"43.847332","stop_lon":"-79.042015","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/aj/station-details","stop_short_name":"AJ","ATLS_LID":18,"ATLS_LOCATIONLABEL":"AJAX","isYard":"false","stop_code":null},{"stop_name":"Aldershot GO Station - Train Station","stop_lat":"43.312374","stop_lon":"-79.856667","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/al/station-details","stop_short_name":"AL","ATLS_LID":2,"ATLS_LOCATIONLABEL":"ALDERSHOT","isYard":"false","stop_code":null},{"stop_name":"Appleby GO Station - Train Station","stop_lat":"43.379089","stop_lon":"-79.760704","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ap/station-details","stop_short_name":"AP","ATLS_LID":4,"ATLS_LOCATIONLABEL":"APPLEBY","isYard":"false","stop_code":null},{"stop_name":"Aurora GO Station - Train Station","stop_lat":"44.001083","stop_lon":"-79.459854","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/au/station-details","stop_short_name":"AU","ATLS_LID":33,"ATLS_LOCATIONLABEL":"AURORA","isYard":"false","stop_code":null},{"stop_name":"Barrie South GO Station - Train Station","stop_lat":"44.351463","stop_lon":"-79.628532","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ba/station-details","stop_short_name":"BA","ATLS_LID":981,"ATLS_LOCATIONLABEL":"BARRIE SOUTH","isYard":"false","stop_code":null},{"stop_name":"Bloor GO Station - Train Station","stop_lat":"43.657314","stop_lon":"-79.449905","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/bl/station-details","stop_short_name":"BL","ATLS_LID":22,"ATLS_LOCATIONLABEL":"BLOOR","isYard":"false","stop_code":null},{"stop_name":"Bradford GO Station - Train Station","stop_lat":"44.116497","stop_lon":"-79.556435","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/bd/station-details","stop_short_name":"BD","ATLS_LID":35,"ATLS_LOCATIONLABEL":"BRADFORD","isYard":"false","stop_code":null},{"stop_name":"Bramalea GO Station - Train Station","stop_lat":"43.70224","stop_lon":"-79.690575","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/be/station-details","stop_short_name":"BE","ATLS_LID":26,"ATLS_LOCATIONLABEL":"BRAMALEA","isYard":"false","stop_code":null},{"stop_name":"Brampton GO Station - Train Station","stop_lat":"43.687183","stop_lon":"-79.763351","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/br/station-details","stop_short_name":"BR","ATLS_LID":27,"ATLS_LOCATIONLABEL":"BRAMPTON","isYard":"false","stop_code":null},{"stop_name":"Bronte GO Station - Train Station","stop_lat":"43.417053","stop_lon":"-79.722565","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/bo/station-details","stop_short_name":"BO","ATLS_LID":5,"ATLS_LOCATIONLABEL":"BRONTE","isYard":"false","stop_code":null},{"stop_name":"Burlington GO Station - Train Station","stop_lat":"43.340862","stop_lon":"-79.808868","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/bu/station-details","stop_short_name":"BU","ATLS_LID":3,"ATLS_LOCATIONLABEL":"BURLINGTON","isYard":"false","stop_code":null},{"stop_name":"Centennial GO Station - Train Station","stop_lat":"43.873062","stop_lon":"-79.290207","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ce/station-details","stop_short_name":"CE","ATLS_LID":42,"ATLS_LOCATIONLABEL":"CENTENNIAL","isYard":"false","stop_code":null},{"stop_name":"Clarkson GO Station - Train Station","stop_lat":"43.512989","stop_lon":"-79.633308","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/cl/station-details","stop_short_name":"CL","ATLS_LID":7,"ATLS_LOCATIONLABEL":"CLARKSON","isYard":"false","stop_code":null},{"stop_name":"Cooksville GO Station - Train Station","stop_lat":"43.582764","stop_lon":"-79.62384","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/co/station-details","stop_short_name":"CO","ATLS_LID":553,"ATLS_LOCATIONLABEL":"COOKSVILLE","isYard":"false","stop_code":null},{"stop_name":"Danforth GO Station - Train Station","stop_lat":"43.686802","stop_lon":"-79.300392","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/da/station-details","stop_short_name":"DA","ATLS_LID":12,"ATLS_LOCATIONLABEL":"DANFORTH","isYard":"false","stop_code":null},{"stop_name":"Dixie GO Station - Train Station","stop_lat":"43.607681","stop_lon":"-79.577888","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/di/station-details","stop_short_name":"DI","ATLS_LID":552,"ATLS_LOCATIONLABEL":"DIXIE","isYard":"false","stop_code":null},{"stop_name":"East Gwillimbury GO Station - Train Station","stop_lat":"44.077682","stop_lon":"-79.455811","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ea/station-details","stop_short_name":"EA","ATLS_LID":866,"ATLS_LOCATIONLABEL":"EAST GWILLIMBURY","isYard":"false","stop_code":null},{"stop_name":"Eglinton GO Station - Train Station","stop_lat":"43.73975","stop_lon":"-79.232025","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/eg/station-details","stop_short_name":"EG","ATLS_LID":14,"ATLS_LOCATIONLABEL":"EGLINTON","isYard":"false","stop_code":null},{"stop_name":"Erindale GO Station - Train Station","stop_lat":"43.567059","stop_lon":"-79.667007","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/er/station-details","stop_short_name":"ER","ATLS_LID":554,"ATLS_LOCATIONLABEL":"ERINDALE","isYard":"false","stop_code":null},{"stop_name":"Etobicoke North GO Station - Train Station","stop_lat":"43.706234","stop_lon":"-79.564461","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/et/station-details","stop_short_name":"ET","ATLS_LID":24,"ATLS_LOCATIONLABEL":"ETOBICOKE NORTH","isYard":"false","stop_code":null},{"stop_name":"Exhibition Station GO - Train Station","stop_lat":"43.63649","stop_lon":"-79.416664","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ex/station-details","stop_short_name":"EX","ATLS_LID":11,"ATLS_LOCATIONLABEL":"EXHIBITION","isYard":"false","stop_code":null},{"stop_name":"Georgetown GO Station - Train Station","stop_lat":"43.655579","stop_lon":"-79.91848","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ge/station-details","stop_short_name":"GE","ATLS_LID":28,"ATLS_LOCATIONLABEL":"GEORGETOWN","isYard":"false","stop_code":null},{"stop_name":"Guildwood GO Station - Train Station","stop_lat":"43.755413","stop_lon":"-79.1996","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/gu/station-details","stop_short_name":"GU","ATLS_LID":15,"ATLS_LOCATIONLABEL":"GUILDWOOD","isYard":"false","stop_code":null},{"stop_name":"Hamilton Go Station - Train Station","stop_lat":"43.252949","stop_lon":"-79.869041","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ha/station-details","stop_short_name":"HA","ATLS_LID":1,"ATLS_LOCATIONLABEL":"HAMILTON","isYard":"false","stop_code":null},{"stop_name":"Kennedy GO Station - Train Station","stop_lat":"43.733002","stop_lon":"-79.262321","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ke/station-details","stop_short_name":"KE","ATLS_LID":728,"ATLS_LOCATIONLABEL":"KENNEDY","isYard":"false","stop_code":null},{"stop_name":"King City GO Station - Train Station","stop_lat":"43.920006","stop_lon":"-79.526817","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/kc/station-details","stop_short_name":"KC","ATLS_LID":32,"ATLS_LOCATIONLABEL":"KING CITY","isYard":"false","stop_code":null},{"stop_name":"Kipling GO Station - Train Station","stop_lat":"43.638004","stop_lon":"-79.534683","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/kp/station-details","stop_short_name":"KP","ATLS_LID":551,"ATLS_LOCATIONLABEL":"KIPLING","isYard":"false","stop_code":null},{"stop_name":"Langstaff GO Station - Train Station","stop_lat":"43.838661","stop_lon":"-79.423187","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/la/station-details","stop_short_name":"LA","ATLS_LID":37,"ATLS_LOCATIONLABEL":"LANGSTAFF","isYard":"false","stop_code":null},{"stop_name":"Old Elm GO Station - Train Station","stop_lat":"43.992914","stop_lon":"-79.235670","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/li/station-details","stop_short_name":"LI","ATLS_LID":727,"ATLS_LOCATIONLABEL":"OLD ELM","isYard":"false","stop_code":null},{"stop_name":"Lisgar GO Station - Train Station","stop_lat":"43.590954","stop_lon":"-79.788971","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ls/station-details","stop_short_name":"LS","ATLS_LID":959,"ATLS_LOCATIONLABEL":"LISGAR","isYard":"false","stop_code":null},{"stop_name":"Long Branch GO Station - Train Station","stop_lat":"43.591503","stop_lon":"-79.545723","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/lo/station-details","stop_short_name":"LO","ATLS_LID":9,"ATLS_LOCATIONLABEL":"LONG BRANCH","isYard":"false","stop_code":null},{"stop_name":"Malton GO Station - Train Station","stop_lat":"43.705067","stop_lon":"-79.638153","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ma/station-details","stop_short_name":"MA","ATLS_LID":25,"ATLS_LOCATIONLABEL":"MALTON","isYard":"false","stop_code":null},{"stop_name":"Maple GO Station - Train Station","stop_lat":"43.858143","stop_lon":"-79.506767","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mp/station-details","stop_short_name":"MP","ATLS_LID":31,"ATLS_LOCATIONLABEL":"MAPLE","isYard":"false","stop_code":null},{"stop_name":"Markham GO Station - Train Station","stop_lat":"43.882816","stop_lon":"-79.262383","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mr/station-details","stop_short_name":"MR","ATLS_LID":43,"ATLS_LOCATIONLABEL":"MARKHAM","isYard":"false","stop_code":null},{"stop_name":"Meadowvale GO Station - Train Station","stop_lat":"43.597397","stop_lon":"-79.753349","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/me/station-details","stop_short_name":"ME","ATLS_LID":556,"ATLS_LOCATIONLABEL":"MEADOWVALE","isYard":"false","stop_code":null},{"stop_name":"Milliken GO Station - Train Station","stop_lat":"43.823818","stop_lon":"-79.30217","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mk/station-details","stop_short_name":"MK","ATLS_LID":40,"ATLS_LOCATIONLABEL":"MILLIKEN","isYard":"false","stop_code":null},{"stop_name":"Milton GO Station - Train Station","stop_lat":"43.523632","stop_lon":"-79.867188","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ml/station-details","stop_short_name":"ML","ATLS_LID":557,"ATLS_LOCATIONLABEL":"MILTON","isYard":"false","stop_code":null},{"stop_name":"Mimico GO Station - Train Station","stop_lat":"43.616283","stop_lon":"-79.497734","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mi/station-details","stop_short_name":"MI","ATLS_LID":10,"ATLS_LOCATIONLABEL":"MIMICO","isYard":"false","stop_code":null},{"stop_name":"Mount Joy GO Station - Train Station","stop_lat":"43.899799","stop_lon":"-79.263229","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mj/station-details","stop_short_name":"MJ","ATLS_LID":901,"ATLS_LOCATIONLABEL":"MOUNT JOY","isYard":"false","stop_code":null},{"stop_name":"Mount Pleasant GO Station - Train Station","stop_lat":"43.675217","stop_lon":"-79.821205","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/mo/station-details","stop_short_name":"MO","ATLS_LID":674,"ATLS_LOCATIONLABEL":"MOUNT PLEASANT","isYard":"false","stop_code":null},{"stop_name":"Newmarket GO Station - Train Station","stop_lat":"44.059788","stop_lon":"-79.459396","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ne/station-details","stop_short_name":"NE","ATLS_LID":34,"ATLS_LOCATIONLABEL":"NEWMARKET","isYard":"false","stop_code":null},{"stop_name":"Oakville GO Station - Train Station","stop_lat":"43.455173","stop_lon":"-79.682671","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/oa/station-details","stop_short_name":"OA","ATLS_LID":6,"ATLS_LOCATIONLABEL":"OAKVILLE","isYard":"false","stop_code":null},{"stop_name":"Old Cummer GO Station - Train Station","stop_lat":"43.794182","stop_lon":"-79.371613","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ol/station-details","stop_short_name":"OL","ATLS_LID":36,"ATLS_LOCATIONLABEL":"OLD CUMMER","isYard":"false","stop_code":null},{"stop_name":"Oriole GO Station - Train Station","stop_lat":"43.76495","stop_lon":"-79.364349","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/or/station-details","stop_short_name":"OR","ATLS_LID":676,"ATLS_LOCATIONLABEL":"ORIOLE","isYard":"false","stop_code":null},{"stop_name":"Oshawa GO Station - Train Station","stop_lat":"43.870831","stop_lon":"-78.8853","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/os/station-details","stop_short_name":"OS","ATLS_LID":20,"ATLS_LOCATIONLABEL":"OSHAWA","isYard":"false","stop_code":null},{"stop_name":"Pickering Station GO - Train Station","stop_lat":"43.830853","stop_lon":"-79.084732","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/pin/station-details","stop_short_name":"PIN","ATLS_LID":914,"ATLS_LOCATIONLABEL":"PICKERING","isYard":"false","stop_code":null},{"stop_name":"Port Credit GO Station - Train Station","stop_lat":"43.556137","stop_lon":"-79.586884","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/po/station-details","stop_short_name":"PO","ATLS_LID":8,"ATLS_LOCATIONLABEL":"PORT CREDIT","isYard":"false","stop_code":null},{"stop_name":"Richmond Hill GO Station - Train Station","stop_lat":"43.874195","stop_lon":"-79.426239","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ri/station-details","stop_short_name":"RI","ATLS_LID":38,"ATLS_LOCATIONLABEL":"RICHMOND HILL","isYard":"false","stop_code":null},{"stop_name":"Rouge Hill GO Station - Train Station","stop_lat":"43.780357","stop_lon":"-79.130852","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ro/station-details","stop_short_name":"RO","ATLS_LID":16,"ATLS_LOCATIONLABEL":"ROUGE HILL","isYard":"false","stop_code":null},{"stop_name":"Rutherford GO Station - Train Station","stop_lat":"43.838753","stop_lon":"-79.498619","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ru/station-details","stop_short_name":"RU","ATLS_LID":30,"ATLS_LOCATIONLABEL":"RUTHERFORD","isYard":"false","stop_code":null},{"stop_name":"Scarborough GO Station - Train Station","stop_lat":"43.716969","stop_lon":"-79.255798","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/sc/station-details","stop_short_name":"SC","ATLS_LID":13,"ATLS_LOCATIONLABEL":"SCARBOROUGH","isYard":"false","stop_code":null},{"stop_name":"Stouffville GO Station - Train Station","stop_lat":"43.971066","stop_lon":"-79.249969","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/st/station-details","stop_short_name":"ST","ATLS_LID":45,"ATLS_LOCATIONLABEL":"STOUFFVILLE","isYard":"false","stop_code":null},{"stop_name":"Streetsville GO Station - Train Station","stop_lat":"43.576923","stop_lon":"-79.711388","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/sr/station-details","stop_short_name":"SR","ATLS_LID":555,"ATLS_LOCATIONLABEL":"STREETSVILLE","isYard":"false","stop_code":null},{"stop_name":"Unionville GO Station - Train Station","stop_lat":"43.851921","stop_lon":"-79.313873","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ui/station-details","stop_short_name":"UI","ATLS_LID":41,"ATLS_LOCATIONLABEL":"UNIONVILLE","isYard":"false","stop_code":null},{"stop_name":"Weston GO Station - Train Station","stop_lat":"43.701591","stop_lon":"-79.516197","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/we/station-details","stop_short_name":"WE","ATLS_LID":23,"ATLS_LOCATIONLABEL":"WESTON","isYard":"false","stop_code":null},{"stop_name":"Whitby GO Station - Train Station","stop_lat":"43.864883","stop_lon":"-78.937675","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/wh/station-details","stop_short_name":"WH","ATLS_LID":19,"ATLS_LOCATIONLABEL":"WHITBY","isYard":"false","stop_code":null},{"stop_name":"Kitchener GO Station - TRAIN STATION","stop_lat":"43.45565","stop_lon":"-80.49343","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ki/station-details","stop_short_name":"KI","ATLS_LID":2300,"ATLS_LOCATIONLABEL":"KITCHENER","isYard":"false","stop_code":null},{"stop_name":"Guelph Central GO Station - TRAIN STATION","stop_lat":"43.54433","stop_lon":"-80.24693","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/gl/station-details","stop_short_name":"GL","ATLS_LID":2200,"ATLS_LOCATIONLABEL":"GUELPH","isYard":"false","stop_code":null},{"stop_name":"Union Station - Train Station","stop_lat":"43.645218","stop_lon":"-79.379456","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/un/station-details","stop_short_name":"UN","ATLS_LID":907,"ATLS_LOCATIONLABEL":"UNION","isYard":"false","stop_code":null},{"stop_name":"Allandale Waterfront - Train Station","stop_lat":"44.3747","stop_lon":"-79.6887","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ad/station-details","stop_short_name":"AD","ATLS_LID":2500,"ATLS_LOCATIONLABEL":"ALLANDALE WATERFRONT","isYard":"false","stop_code":null},{"stop_name":"Bathurst Yard","stop_lat":"43.64204","stop_lon":"-79.39539","stop_url":"","stop_short_name":"BNY","ATLS_LID":929,"ATLS_LOCATIONLABEL":"BATHURST YARD","isYard":"true","stop_code":null},{"stop_name":"Willowbrook","stop_lat":"43.61182","stop_lon":"-79.50944","stop_url":"","stop_short_name":"WB","ATLS_LID":646,"ATLS_LOCATIONLABEL":"WILLOWBROOK","isYard":"true","stop_code":null},{"stop_name":"Don Yard","stop_lat":"43.650452","stop_lon":"-79.351749","stop_url":"","stop_short_name":"DONY","ATLS_LID":958,"ATLS_LOCATIONLABEL":"DON YARD","isYard":"true","stop_code":null},{"stop_name":"Allandale Layover","stop_lat":"44.3724515","stop_lon":"-79.6739585","stop_url":"","stop_short_name":"ALST","ATLS_LID":982,"ATLS_LOCATIONLABEL":"ALLANDALE LAYOVER","isYard":"true","stop_code":null},{"stop_name":"Militon Layover","stop_lat":"43.54178","stop_lon":"-79.8443","stop_url":"","stop_short_name":"MILT","ATLS_LID":566,"ATLS_LOCATIONLABEL":"MILITON LAYOVER","isYard":"true","stop_code":null},{"stop_name":"Kitchener Layover","stop_lat":"43.4527","stop_lon":"-80.5026","stop_url":"","stop_short_name":"KILY","ATLS_LID":2400,"ATLS_LOCATIONLABEL":"KITCHENER LAYOVER","isYard":"true","stop_code":null},{"stop_name":"Niagara","stop_lat":"43.108855","stop_lon":"-79.063263","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/ni/station-details","stop_short_name":"NI","ATLS_LID":4010,"ATLS_LOCATIONLABEL":"Niagara","isYard":"false","stop_code":null},{"stop_name":"St. Catharines","stop_lat":"43.147941","stop_lon":"-79.256866","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/scth/station-details","stop_short_name":"SCTH","ATLS_LID":4006,"ATLS_LOCATIONLABEL":"St. Catharines","isYard":"false","stop_code":null},{"stop_name":"Confederation GO Station - Train Station","stop_lat":"43.24167","stop_lon":"-79.75917","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/cf/station-details","stop_short_name":"CF","ATLS_LID":5198,"ATLS_LOCATIONLABEL":"Confederation","isYard":"false","stop_code":null},{"stop_name":"Mount Dennis GO Station - Train Station","stop_lat":"43.68749","stop_lon":"-79.48703","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/md/station-details","stop_short_name":"MD","ATLS_LID":5195,"ATLS_LOCATIONLABEL":"Mount Dennis","isYard":"false","stop_code":null},{"stop_name":"Stratford GO - Train Station","stop_lat":"43.36437","stop_lon":"-80.97574","stop_url":"https://www.gotransit.com/en/find-a-station-or-stop/sf/station-details","stop_short_name":"SF","ATLS_LID":5053,"ATLS_LOCATIONLABEL":"Stratford","isYard":"false","stop_code":null}]';
+    var yardIcon = '/GOTracker/web/images/y_icon.png';
+    var stationIcon = '/GOTracker/web/images/s_icon.png';
+    var stationIcon_cur = '/GOTracker/web/images/h_icon.png';
+    var stationIcon_union = '/GOTracker/web/images/Union.png';
+    var yardImg = null;
+    var stationImg = null;
+    var stationImg_cur = null;
+    var stationImg_union = null;
+    if (yardIcon != '')
+        yardImg = new google.maps.MarkerImage(yardIcon, null, null, null, null, null);
+    if (stationIcon != '')
+        stationImg = new google.maps.MarkerImage(stationIcon, null, null, null, null, null);
+    if (stationIcon_cur != '')
+        stationImg_cur = new google.maps.MarkerImage(stationIcon_cur, null, null, null, null, null);
+    if (stationIcon_union != '')
+        stationImg_union = new google.maps.MarkerImage(stationIcon_union, null, null, null, null, null);
+
+    if (!staticStationMap){
+        // plot union station first
+        var unionPos = new google.maps.LatLng(unionStationLat, unionStationLon);
+        var unionMarker = new google.maps.Marker({ map: map, position: unionPos, title: unionStationName });
+        stationImg_union.anchor = new google.maps.Point(60, 15);
+        unionMarker.setIcon(stationImg_union);
+        unionMarker.setMap(map);    
+        addStationInfoWindow('UN', unionMarker, unionStationName, unionStationId);
+    }
+
+    // plot the rest of the stations
+    if (strStations != '')
+    {
+        var stations = $.parseJSON(strStations);
+        $.each(stations, function () {
+            var lat = Number(this['stop_lat']);
+            var lon = this['stop_lon'];
+            var lstationName = this['ATLS_LOCATIONLABEL'];
+            var lstationId = this['ATLS_LID'];
+            var lstopCd = this['stop_short_name'];
+            var stopCdKey = 'stop_' + lstationId;
+            var isYard = false;
+            try{
+                isYard = this['isYard'] == 'true'? true: false;
+            } catch (e) {}
+
+            if (isYard == false || (includeEquipmentTrip == 'true' && isYard == true)){
+                var pos = new google.maps.LatLng(lat, lon);
+                if (lstationId != unionStationId){
+					let labelClassMarker = "stationMarker";
+					if (window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) {
+						labelClassMarker = "stationMarkerLockedActive";
+					} else if (window.lockedStationIds && window.lockedStationIds.includes(lstationId)) {
+						labelClassMarker = "stationMarkerLocked";
+					}
+                    //var marker = new google.maps.Marker({ map: map, position: pos, title: lstationName });
+                    var labelLength = measureText(lstationName.toUpperCase(), labelClassMarker).width;
+                    var gPoint = new google.maps.Point(labelLength/2, 0);
+                    var marker = new MarkerWithLabel({
+                                        position: pos,
+                                        draggable: false,
+                                        labelContent: lstationName.toUpperCase(),
+                                        labelInBackground: true,
+                                        labelAnchor: gPoint,
+                                        labelClass: labelClassMarker, // the CSS class for the label                                    
+                                        labelStyle: { width: (labelLength)},
+                                        map: map
+                                });
+
+                    if (lstationId != curr_stationId) {
+                        if (isYard){
+                            if (yardImg != null){
+                                marker.setIcon(yardImg);
+                            }
+                        }
+                        else{
+                            if (stationImg != null){
+                                marker.setIcon(stationImg);
+                            }
+                        }
+                    }
+                    else {
+                        if (stationImg_cur != null){
+                            marker.setIcon(stationImg_cur);
+                        }
+                    }
+                    addStationInfoWindow(lstopCd, marker, lstationName, lstationId);
+                }
+            }
+        });
+    }
+    stationLoaded = true;
+}
+
+function addStationInfoWindow(lstopCd, marker, lstationName, lstationId)
+{
+    tripInfoWindow[lstopCd] = new google.maps.InfoWindow({
+        maxWidth: 380
+    });
+
+    google.maps.event.addListener(marker, "click", function () {
+        var strContent = getStationStatusInfo(lstationName, lstationId, lstopCd);
+        tripInfoWindow[lstopCd].setContent(strContent);
+        tripInfoWindow[lstopCd].open(map, marker);
+    });
+}
+
+function loadMap(centerPos, useFollowControl) {
+    var defaultFollowTrain = false;
+    if (map == null) {
+        var myOptions = {
+            zoom: zoomLevel,
+            center: centerPos,
+            streetViewControl: false,
+            panControl:true,
+            draggable: true,
+            scrollwheel: true,
+            zoomControl: true,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+            }
+        };
+        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        // the "dummy" creates a unique URL so it is not cached (good for testing changes)
+        var GOlayer = new google.maps.KmlLayer('https://goapi.metrolinx.com/Map/GOTransitRoutes.kmz' + '?dummy=' + (new Date()).getTime(), { preserveViewport: true });
+        //  var GOlayer = new google.maps.KmlLayer('https://gotracker.ca/Map/GOTransitRoutes.kmzGOTransit2.kmz', { preserveViewport: true });
+        GOlayer.setMap(map);
+        plotAllStations();
+
+        //map.controls[google.maps.ControlPosition.RIGHT_TOP].push(legendDiv);
+        if (useFollowControl == true) {
+            followControl = new FollowControl(map, optionsDiv, defaultFollowTrain);
+            map.controls[google.maps.ControlPosition.RIGHT_TOP].push(optionsDiv);
+        }
+        legendDiv = null;
+    }
+}
+
+function getStationStatusInfo(stationName, lstationId, lstopCd) {
+    var stationInfoUrl = 'https://www.gotransit.com/en/find-a-station-or-stop/';
+    var targetStr = '_blank';
+    if (staticStationMap){
+        stationInfoUrl += lstationId;
+        targetStr = '_self';
+    }else
+        stationInfoUrl += lstopCd;
+
+    var ajaxUrl = goDataAPIurl + "/StationStatus/" + lstationId;
+    var nodeName = 'StationStatus';
+    var contentTxt = '<span class="tripLabel" style="display:block;" ><table class="stbl" style="width:100%;"><tr><td style="background-color: #7388a5; color: white;">' + stationName + '</td></tr><tr><td><a href="' + stationInfoUrl + '" target="' + targetStr + '">Station Info</a></td></tr><tr><td>';
+
+    var req = $.ajax({
+        type: "GET",
+        url: ajaxUrl,
+        dataType: "xml",
+        cache: false,
+        async: false,
+        timeout: 10000,
+        success: function (data, textStatus, XMLHttpRequest) {
+            var noTripKey = 'NoTrip_';
+            var destination;
+            var schedule;
+            var delay;
+            var statusTblContext;
+            var tripCount = 0;
+
+            var err = $(data).find("ErrMsg").text();
+            if (err == ""){
+                var result = $(data).find(nodeName);
+                if (result.length > 0){
+                    statusTblContext = '<table class="stbl" style="width:99%;"><tr class="tblHeader stbl"><td class="stbl" align="left">Destination</td><td class="stbl" align="center">Scheduled</td><td class="stbl" align="center">Delay</td></tr>';
+                    result.each(function () {
+                        var tripId = $(this).attr('TripNumber');
+                        var noTripCount = tripId.search(noTripKey);
+                        if (noTripCount < 0){
+                            if (tripCount < 3){                                
+                                delay = 0;
+                                destination = $(this).attr('Destination');
+                                schedule = $(this).attr('ScheduledTime');
+                                try {
+                                    delay = parseInt($(this).attr('Delay'));
+                                } catch (e) { }
+                                statusTblContext += '<tr class="stopStatus stbl"><td class="stbl" align="left">' + destination + '</td><td class="stbl" align="center">' + schedule + '</td><td class="stbl" align="center">' + delay + '</td></tr>';
+                                tripCount++;
+                            }
+                        }
+                    });
+                }
+                statusTblContext += '</table></td></tr></table>';
+            }
+            if (tripCount > 0)
+                contentTxt += statusTblContext;
+        },
+        error: function (data, textStatus, XMLHttpRequest) {
+            var errStr = "Error requesting station data";
+            $("err").text(errStr);
+//            if (raiseError != undefined && raiseError != null){
+//                raiseError(errStr);
+//            }
+            data = null;
+            XMLHttpRequest = null;
+            textStatus = null;
+        }
+    });
+    contentTxt += '</span>';
+    return contentTxt;
+}
+
+function fetchTripLocationsForServices(serviceIds, lang) {
+    const urlBase = goDataAPIurl + "/TripLocation/Service/Lang/";
+    return Promise.allSettled(
+        serviceIds.map((svc) => {
+            return $.ajax({
+                type: "GET",
+                url: urlBase + svc + "/" + lang,
+                dataType: "xml",
+                cache: false,
+                async: true,
+                timeout: 10000
+            });
+        })
+    ).then((results) => {
+        const xmlDocs = (results || []).filter(r => r.status === 'fulfilled').map(r => r.value);
+        if (!xmlDocs || xmlDocs.length === 0) return null;
+
+        const baseDoc = xmlDocs[0];
+        const baseDataNode = baseDoc.getElementsByTagName('Data')[0];
+        if (!baseDataNode) return baseDoc;
+
+        // Clear existing Data children
+        while (baseDataNode.firstChild) baseDataNode.removeChild(baseDataNode.firstChild);
+
+        xmlDocs.forEach((xmlDoc) => {
+            if (!xmlDoc || !xmlDoc.getElementsByTagName) return;
+            const dataNode = xmlDoc.getElementsByTagName('Data')[0];
+            if (!dataNode) return;
+
+            Array.from(dataNode.childNodes).forEach((child) => {
+                const imported = (baseDoc.importNode) ? baseDoc.importNode(child, true) : child.cloneNode(true);
+                baseDataNode.appendChild(imported);
+            });
+        });
+
+        return baseDoc;
+    });
+}
+
+function moveAllObj(moveMode) {
+    var ajaxUrl;
+    var multiServiceLangCall = false;
+    waiting = true;
+    var lang = "en";
+    tripNodeName = "InServiceTripPublic";
+
+    if (hastusTripId == '' && tripId == ''){
+        if (serviceId == null || serviceId == undefined || serviceId == 'All'){
+            if (allowInternal == true)
+                ajaxUrl = goDataAPIurl + "/AllTripLocations/IncludeEquipmentTrip/IsPublic/Lang/" + includeEquipmentTrip + "/" + isPublic + "/" + lang;
+            else
+                ajaxUrl = goDataAPIurl + "/AllTripLocations/Lang/" + lang;
+        }
+        else {
+            if (allowInternal == true)
+                ajaxUrl = goDataAPIurl + "/TripLocation/Service/IncludeEquipmentTrip/IsPublic/Lang/" + serviceId + "/" + includeEquipmentTrip + "/" + isPublic + "/" + lang ;
+            else {
+                // Replace single serviceId with 7 fixed services and merge all returned XML entries under <Data>
+                ajaxUrl = null;
+                multiServiceLangCall = true;
+            }
+        }
+    }
+    else{
+        if (hastusTripId != ''){
+            tripId = hastusTripId;
+        }
+        ajaxUrl = goDataAPIurl + "/TripLocation/Service/TripNum/Lang/" + serviceId + "/" + tripId + "/" + lang;
+    }
+
+    if (ajaxUrl == '' && !multiServiceLangCall){
+        return;
+    }
+
+    isAjaxReturned = false;
+
+    if (multiServiceLangCall) {
+        const serviceIdsForLangCall = ['65', '31', '09', '01', '21', '61', '71'];
+
+        fetchTripLocationsForServices(serviceIdsForLangCall, lang)
+            .then((mergedXml) => {
+                if (!mergedXml) throw new Error("No trip data returned");
+                tripDataReturn(mergedXml);
+            })
+            .catch((e) => {
+                var errStr = "Error requesting trip data.";
+                trace(errStr);
+                $("err").text(errStr);
+                waiting = false;
+
+                if (mapTripErrorRetryCount > 0){
+                    if (mapTripCurrentErrorCount > mapTripErrorRetryCount){
+                        mapTripCurrentErrorCount = 0;
+                        setTimeout(function(){isAjaxReturned = true;}, mapTripErrorRetryInterval);
+                    }
+                    else {
+                        mapTripCurrentErrorCount++;
+                        isAjaxReturned = true;
+                    }
+                }
+                else
+                    isAjaxReturned = true;
+            });
+    } else {
+        $.ajax({
+            type: "GET",
+            url: ajaxUrl,
+            dataType: "xml",
+            cache: false,
+            async: true,
+            timeout: 10000,
+            success: tripDataReturn,
+            error: function (data, textStatus, XMLHttpRequest) {
+                var errStr = "Error requesting trip data.";
+                trace(errStr);
+                $("err").text(errStr);
+                waiting = false;
+                if (raiseError != undefined && raiseError != null){
+                    //raiseError(errStr);
+                }
+                if (mapTripErrorRetryCount > 0){
+                    if (mapTripCurrentErrorCount > mapTripErrorRetryCount){
+                        mapTripCurrentErrorCount = 0;
+                        setTimeout(function(){isAjaxReturned = true;}, mapTripErrorRetryInterval);
+                    }
+                    else
+                    {
+                        mapTripCurrentErrorCount++;
+                        isAjaxReturned = true;
+                    }
+               }
+               else
+                    isAjaxReturned = true;
+            }
+        });
+    }
+}
+
+function tripDataReturn(data) {
+    isAjaxReturned = true;
+    var noTripErrStr = "Currently no Service is available";
+    var err = $(data).find("ErrMsg").text();
+    if (err == ""){
+        var result = $(data).find(tripNodeName);
+        if (result.length > 0){
+            //trace('return trips: ' + result.length);
+
+            $.each(allMarker, function(key, value){
+                value.isValid = false;
+            });
+
+            result.each(function () {
+                var lat;
+                var lon;
+                var delay;
+                var speed = 0;
+                var isBus = false;
+                var express = false;
+                var trainMeet = false;
+                var tsource;
+                var toHideMarker = false;
+                var tripName = '';
+                var tripNum = '';
+
+                tripName = $(this).attr('TripName');
+                tripNum = $(this).attr('TripNumber');
+                try{
+                    toHideMarker = ($(this).attr('ToHideMarker')) == 'true'? true: false;
+                } catch (e) {}
+                if (toHideMarker == false) {
+                    delay = 0;
+                    lat = $(this).attr('Latitude');
+                    lon = $(this).attr('Longitude');
+                    try{
+                        tsource = $(this).attr('Source');
+                        if (tsource == 'B'){
+                            isBus = true;
+                        }
+                    } catch(e){}
+
+                    //speed = 0;
+                    //try {
+                    //    speed = parseInt($(this).attr('Speed'));
+                    //} catch (e) { }
+                    
+                    try {
+                        delay = parseInt($(this).attr('DelaySeconds')) / 60;
+                    } catch (e) { }
+
+                    if (tripId != "" || hastusTripId != "") {
+                        if (lat == 0 && lon == 0) {
+                            $("#err").text('No coordinates');
+                            return;
+                        }
+                        if (panTrain == true){
+                            PanTrainToPos(lat, lon);                            
+                            panTrain = false;
+                        }
+                        else{
+                            if (followControl != null && followControl != undefined){
+                            panTrain = followControl.getFollow();
+                            if (panTrain)
+                                PanTrainToPos(lat, lon);
+                            }
+                        }
+                    }
+                    var rtn;
+                    try {
+                        //rtn = moveObj(moveMode + '_' + tripNum, tripName, tripNum, lat, lon, delay, speed, isBus);
+                        rtn = moveObj(tripNum, this, isBus);
+                    }
+                    catch (e) { }
+                    finally {
+                        rtn = null;
+                        delete rtn;
+                    }
+                }
+            });
+            removeMarkerLoop(false);
+            noTripDataReturnCount = 0;
+        }
+        else{
+            if (!firstLoad){
+                if (noTripDataReturnCount < 5){
+                    noTripDataReturnCount++;
+                }
+                else{
+                    //trace('all marker to be removed');
+                    removeMarkerLoop(true);
+                    //trace('marker count after removing all of them: ' + trainMarker);
+                    noTripDataReturnCount = 0;
+                }
+            }
+            else{
+                firstLoad = false;
+                //if (raiseError != undefined && raiseError != null){
+                //    raiseError(noTripErrStr + "," + err);
+                //}
+            }
+        }
+        result = null;
+        waiting = false;
+        if (firstLoad == true){
+            firstLoad = false;
+        }
+    }
+    else{
+        if (firstLoad == true){
+            firstLoad = false;
+//            if (raiseError != undefined && raiseError != null){
+//                raiseError(err);
+//            }
+        }
+    }
+    err = null;
+    data = null;
+    delete err;
+    delete data;
+}
+
+function PanTrainToPos(lat, lon){
+    runningTrainPos = null;
+    delete runningTrainPos;
+    runningTrainPos = new google.maps.LatLng(lat, lon);
+    map.panTo(runningTrainPos);                            
+}
+
+function removeMarkerLoop(removeAll){
+    if (hasMarker){
+        //var newMarker = new Object();
+        var removeList = [];
+        $.each(allMarker, function(key, value){            
+            if (removeAll || value.isValid == false){
+                removeList.push(value.key);
+                removeMarker(value); 
+                value = null;  
+                delete value;         
+            }
+        });
+        $.each(removeList, function(key, value){
+            var idx = $.inArray(value, allMarkerKey);
+            if (idx != -1) {
+                allMarkerKey.splice(idx, 1);
+                allMarker.splice(idx, 1);
+            }
+        });
+
+        delete removeList;
+        if (removeAll){
+            hasMarker = false;
+            allMarker = [];
+            allMarkerKey = [];
+        }
+    }
+}
+
+function removeMarker(value){
+    if (value.marker != null && value.marker != undefined){
+        //var str = 'Marker removed - value.key + ', ' + getCurrentTime();
+        //trace(str);
+//        var idx = allMarkerKey.indexOf(key);
+//        if (idx != -1) {
+//            allMarkerKey.splice(idx, 1);
+//            allMarker.splice(idx, 1);
+//        }
+        value.marker.setVisible(false);
+        value.marker.setTitle('');
+        value.marker.setIcon(null);
+        value.marker.setMap(null);
+        value.marker = null;
+        delete value.marker;
+    }
+    if (value.InfoWindow != null && value.InfoWindow != undefined){
+        value.InfoWindow.setContent('');
+        value.InfoWindow.close();
+        google.maps.event.removeListener(value.InfoWindowListener);
+        value.InfoWindow = null;
+        value.InfoWindowListener = null;
+        delete value.InfoWindowListener;
+        delete value.InfoWindow;
+    }
+}
+
+function findMarker(key){
+    var rtn = null;    
+    var idx = $.inArray(key, allMarkerKey)
+    if (idx != -1) {
+        rtn = allMarker[idx];
+    }
+    return rtn;
+}
+
+var legendDiv = document.createElement('DIV');
+legendDiv.setAttribute('id','legend'); 
+
+// Create a div to hold the control.
+var controlDiv = document.createElement('DIV');
+
+// Set CSS styles for the DIV containing the control
+// Setting padding to 5 px will offset the control
+// from the edge of the map
+controlDiv.style.padding = '1px';
+
+var controlUI = document.createElement('IMG');
+controlUI.setAttribute('src', '/GOTracker/web/Images/legend-t.png')
+controlUI.setAttribute('width', '100%');
+
+controlDiv.appendChild( controlUI );
+legendDiv.appendChild(controlDiv);
+controlUI = null;
+controlDiv = null;
+
+var followControl;
+
+function moveObj (key, obj, isBus) {
+    var delay = 0.0;
+    var delayInt = 0;
+
+    var tripName = $(obj).attr('TripName');
+    var tripNum = $(obj).attr('TripNumber');
+    var lat = $(obj).attr('Latitude');
+    var lon = $(obj).attr('Longitude');
+    var startDesc = $(obj).attr('StartStation');
+    var endDesc = $(obj).attr('EndStation');
+    var vehicleId = $(obj).attr('EquipmentCode');
+    var routeName = $(obj).attr('ToolTipText');
+    var tripLabelDesc = $(obj).attr('TripLabelDesc');
+    var isOverlapping = false;
+    var toHideMarker = false;
+    var speed = 0;
+    var express = false;
+    var trainMeet = false;
+    var vMarker = null;
+    var isMoving = false;
+	var hasMemo = null;
+
+    try {
+        isMoving = ($(obj).attr('IsMoving')) == 'true'? true: false;
+    } catch (e) {}
+
+    try {
+        delay = parseInt($(obj).attr('DelaySeconds'));
+        delayInt = parseInt($(obj).attr('DelayMinute'));
+        //if (delay != undefined && delay > 0){
+        //    delayInt = Math.floor(delay/60);
+        //}
+    } catch (e) { }
+    try{
+        express = ($(obj).attr('Express')) == 'true'? true: false;
+    } catch (e) {}
+    try{
+        trainMeet = ($(obj).attr('TrainMeet')) == 'true'? true: false;
+    } catch (e) {}
+    try{
+        isOverlapping = ($(obj).attr('IsOverlapping')) == 'true'? true: false;
+    } catch (e) {}
+	try{
+        hasMemo = ($(obj).attr('delayMemo')) || null;
+    } catch (e) {}
+
+    if (tripNum == '') return;
+    if (lat == null || lon == null) return;
+    if (lat == 0 && lon == 0) {
+        return;
+    }
+    var trainPos = new google.maps.LatLng(lat, lon);
+
+    var markerImg;
+    if (isBus == true){
+        if (trainMeet == true){
+            markerImg = pMarkerImg[8];
+        }
+        else{
+            markerImg = pMarkerImg[7];
+        }
+    }
+    else{
+        if (isOverlapping){
+            markerImg = pMarkerImg[9];
+        }
+        else{
+            if (delayInt < l1) {
+                if (isMoving)
+                    markerImg = pMarkerImg[1];
+                else
+                    markerImg = pMarkerImg[4];
+            }
+            else{
+                if (isMoving)
+                    markerImg = pMarkerImg[2];
+                else
+                    markerImg = pMarkerImg[5];
+            }
+        }
+    }
+
+    //var tripLabel = tripNum;
+    var tripLabelLengthOffset = 0;
+    //var tripLabelLength = tripLabel.length * 9;
+    if (delay > 0){
+        //tripLabel += ' (' + delayInt + ')' ;
+        //tripLabelLength = tripLabel.length * 8;
+    }
+    else{
+        var tBox = measureText(' (0:00:00)', "trainMarker");
+        tripLabelLengthOffset = tBox.width;
+        tBox = null;
+        delete tBox;
+    }
+    console.log(delay+"|"+isMoving);
+    if (isPublic == true && !isBus){
+        tripLabelDesc = tripName + formatStop(delay, isMoving, hasMemo);
+        //tripLabelLength = tripLabel.length * 8;
+    }
+
+    var tBox = measureText(tripLabelDesc, "trainMarker");
+    var tripLabelLength = tBox.width + tripLabelLengthOffset;
+    tBox = null;
+    delete tBox;
+
+    //tripLabel = "<span id='trainIcon' style='length:" + tripLabelLength + "px;'>" + tripLabel + "</span>";
+    vMarker = findMarker(key);
+    if (vMarker == null) {
+        //trace('Trip Added: ' + tripNum + '(' + tripName + '), trainmarker count:' + allMarker.length);
+        var marker;
+        if (showTrainLabel){
+			let labelClassMarker = "trainMarker";
+			if (window.affectedTrips && window.affectedTrips.includes(tripNum)) {
+				labelClassMarker = "trainMarkerAffected";
+    		} else if (hasMemo) {
+				labelClassMarker = "trainMarkerMemo";
+			} else if (delay >= 300) {
+				labelClassMarker = "trainMarkerDelay";
+			} else if (delay >= 120) {
+				labelClassMarker = "trainMarkerMinor";
+			}
+            marker = new MarkerWithLabel_Top({
+                position: trainPos,
+                draggable: false,
+                labelContent: tripLabelDesc,
+                labelInBackground: false,
+                labelAnchor: new google.maps.Point(0, 0),
+                labelClass: labelClassMarker, // the CSS class for the label
+                labelStyle: { width: (tripLabelLength) }
+            });
+            //marker.set("labelContent", tripLabel);
+            marker.setMap(map);
+        }
+        else{
+            marker = new google.maps.Marker({ map: map, position: trainPos });
+        }
+        
+        vMarker = new vehMarker(marker, key);
+        //trainMarker[key] = vMarker;
+        allMarker.push(vMarker);
+        allMarkerKey.push(key);
+        hasMarker = true;
+        marker = null;
+        delete marker;
+        //trace("Marker created: " + vMarker.key + ", " + vMarker.marker);        
+    }
+    else {        
+        //vMarker = trainMarker[key];
+        //trace('Trip key: ' + vMarker.key + ', Trip remapped: ' + tripNum + '(' + tripName + '), trainmarker :' + vMarker.marker);
+        if (vMarker.marker.getMap() == null){
+            vMarker.marker.setMap(map);
+        }        
+        if (showTrainLabel) {
+            vMarker.marker.set("labelContent", tripLabelDesc);
+            //vMarker.marker.set("labelStyle", '{width: ' + tripLabelLength + '}');
+        }
+        vMarker.marker.setPosition(trainPos);
+        //vMarker.marker.set("labelClass", "train");
+    }
+
+    if (vMarker.marker != null && vMarker.marker != undefined){
+        SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName);
+        vMarker.marker.setIcon(markerImg);
+        vMarker.marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 30000000);
+        vMarker.isValid = true;
+    }
+    vMarker = null;
+    markerImg = null;
+    trainPos = null;
+    delete vMarker;
+    delete markerImg;
+    delete trainPos;
+    obj = null;
+    delete obj;
+}
+
+function formatStop(seconds, move, memo){
+    const m = Math.floor(Math.abs(seconds) / 60);
+    const s = Math.abs(seconds) % 60;
+    let resultStr = "";
+
+    if (seconds == 0) {
+        resultStr = "On time";
+    }
+
+    if (seconds > -60 && seconds < 60 && seconds != 0) {
+        resultStr = `${s} sec${s == 1 ? "" : "s"}`;
+    } else if (seconds != 0){
+        resultStr = `${m} min${m == 1 ? "" : "s"} ${s} sec${s == 1 ? "" : "s"}`;
+    }
+    if (seconds < 0) {
+        resultStr = "Early " + resultStr;
+    }
+   resultStr += move ? " / Moving" : " / Stopped";
+   if (memo) {
+	   resultStr += "\n" + memo;
+   }
+  return "\n" + resultStr;
+}
+	
+function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName){
+    vMarker.marker.setTitle(replaceAll(routeName, '<hr/>', '\r\n\r\n'));
+
+    var routeNameBR = routeName.replace(/(\r\n|\n|\r)/gm, htmlBR);
+    var strContent = '<span class="tripLabel">' + htmlBR + routeNameBR + '</span>';
+
+    if (vMarker.InfoWindow == null){
+        trace('Info Window created for trip: ' + vMarker.key);
+        vMarker.InfoWindow = new google.maps.InfoWindow({
+            content: strContent
+        });
+
+        vMarker.InfoWindowListener = google.maps.event.addListener(vMarker.marker, "click", function () {
+            vMarker.InfoWindow.open(map, vMarker.marker);
+        });
+    }
+    else{
+        vMarker.InfoWindow.setContent(strContent);
+    }
+    delete routeNameBR;
+    delete strContent;
+}
+
+$(document).ready(function () {
+    trace('Started');
+    initMap();
+    if (!staticStationMap){
+        setTimeout(doMove, 1500);
+        t = setInterval(toLoop, 10000);
+    }
+});
+
+function initMap(){
+    panTrain = true;
+    var stationPos = new google.maps.LatLng(stationLat, stationLon);
+    loadMap(stationPos, allowFollowTrain);
+    delete stationPos;
+}
+
+function doMove(){
+    var rtn;
+    try {
+//        if (isBusOnly == false){        
+//            rtn = moveAllObj('train');
+//            if (tripId == '')
+//                rtn = moveAllObj('bus');    
+//        }
+//        else{
+//            rtn = moveAllObj('bus');    
+//        }
+        if (isAjaxReturned){
+            rtn = moveAllObj('service');
+        }
+    }
+    catch(e){}
+    finally {
+        rtn = null;
+        delete rtn;
+    }
+}
+
+function toLoop() {
+    var rtn;
+    try {
+        if (waiting == false) {
+            doMove();
+            if (updateParent != undefined)
+                updateParent();
+        }
+    }
+    catch (e) {
+        waiting = false;
+    }
+    finally {
+        rtn = null;
+        delete rtn;
+    }
+}
+
+function ToChangeService(_serviceId){
+    alert(_serviceId);
+}
+
+function ToIncludeEquipmentTrip(_includeET){
+    includeEquipmentTrip = _includeET;
+    reloadAllTrips();
+}
+
+function reloadAllTrips(){
+    removeMarkerLoop(true);
+    doMove();
+}
+</script>
+</head>
+<span id="err"></span>
+<div id="map_canvas" style="z-index:0;"></div>
+
+
+</body>
+</html>
