@@ -136,7 +136,7 @@
          width: auto;
          color:Blue;
          padding: 2px;
-         background-color: lightgray;
+         background-color: gray;
          font-family: Arial Narrow, Arial, sans-serif;
          font-size: 14px;
          font-weight: bold;
