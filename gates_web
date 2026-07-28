@@ -407,6 +407,7 @@ class Dashboard {
         window.activeLockedStationIds = this.lockedStations.filter(i=>i.isActive).map(i=>i.atlsId);
         window.affectedTrips = this.alllockedStationVehicleIds;
 		if (JSON.stringify(c1) != JSON.stringify(window.lockedStationIds) || JSON.stringify(c2) != JSON.stringify(window.activeLockedStationIds) || JSON.stringify(c3) != JSON.stringify(window.affectedTrips)) {
+            reloadAllTrips();
 			plotAllStations();
 		}
     }
