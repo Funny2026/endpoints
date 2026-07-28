@@ -1484,6 +1484,7 @@ function moveObj (key, obj, isBus) {
         //trace('Trip Added: ' + tripNum + '(' + tripName + '), trainmarker count:' + allMarker.length);
         var marker;
         if (showTrainLabel){
+            delay = delay;
 			let labelClassMarker = "trainMarker";
 			if (window.affectedTrips && window.affectedTrips.includes(tripNum)) {
 				labelClassMarker = "trainMarkerAffected";
