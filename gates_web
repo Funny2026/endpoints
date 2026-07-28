@@ -855,7 +855,8 @@ function plotAllStations() {
 
             if (isYard == false || (includeEquipmentTrip == 'true' && isYard == true)){
                 var pos = new google.maps.LatLng(lat, lon);
-                if (lstationId != unionStationId){
+                let showPastLockedStations = (!(window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) && window.lockedStationIds && window.lockedStationIds.includes(lstationId));
+                if (lstationId != unionStationId && !showPastLockedStations){
 					let labelClassMarker = "stationMarker";
 					if (window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) {
 						labelClassMarker = "stationMarkerLockedActive";
