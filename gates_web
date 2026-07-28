@@ -26,7 +26,6 @@
     </form>
     
 <head id="MapHead">
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />    
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 
     <style type="text/css">
@@ -1668,7 +1667,7 @@ function reloadAllTrips(){
 </script>
 </head>
 <span id="err"></span>
-<div id="map_canvas" style="z-index:0;zoom:50%"></div>
+<div id="map_canvas" style="z-index:0"></div>
 
 
 </body>
