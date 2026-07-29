@@ -6,7 +6,7 @@
 
 </title></head>
 <body style="height:100%;">
-    <div style="width:100%;height:3px;position:fixed;z-index:1000"></div>
+	<div style="width:100%;height:3px;position:fixed;z-index:1000"></div>
     <script type="text/javascript" language="javascript">
         function raiseError(err) {
             alert(err);
@@ -408,7 +408,7 @@ class Dashboard {
         window.activeLockedStationIds = this.lockedStations.filter(i=>i.isActive).map(i=>i.atlsId);
         window.affectedTrips = this.alllockedStationVehicleIds;
 		if (JSON.stringify(c1) != JSON.stringify(window.lockedStationIds) || JSON.stringify(c2) != JSON.stringify(window.activeLockedStationIds) || JSON.stringify(c3) != JSON.stringify(window.affectedTrips)) {
-            reloadAllTrips();
+			reloadAllTrips();
 			plotAllStations();
 		}
     }
@@ -857,8 +857,7 @@ function plotAllStations() {
 
             if (isYard == false || (includeEquipmentTrip == 'true' && isYard == true)){
                 var pos = new google.maps.LatLng(lat, lon);
-                let showPastLockedStations = (!(window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) && window.lockedStationIds && window.lockedStationIds.includes(lstationId));
-                if (lstationId != unionStationId && !showPastLockedStations){
+                if (lstationId != unionStationId){
 					let labelClassMarker = "stationMarker";
 					if (window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) {
 						labelClassMarker = "stationMarkerLockedActive";
