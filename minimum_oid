@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="status">Idle</div>
+<script>
+if (!localStorage.ping) {
+  localStorage.ping = 0;
+}
+let startSeedDate = new Date("2026-08-01T07:00:00Z").getTime();
+let endSeedDate = new Date("2027-07-31T06:59:59Z").getTime();
+let hourAdjustmentStart = new Date("2026-11-01T09:00:00Z").getTime();
+let hourAdjustmentEnd = new Date("2027-03-14T10:00:00Z").getTime();
+
+async function sendRequests() {
+  for (;;) {
+    try {
+      let now = new Date().getTime();
+      let isValid = true;
+      if (!(startSeedDate <= now && now < endSeedDate)) {
+        isValid = false;
+      }
+      let delayMs = 0;
+      if (hourAdjustmentStart <= now && now < hourAdjustmentEnd) {
+        delayMs = 3600000;
+      }
+      let minExec =
+        Math.ceil((now - startSeedDate - delayMs) / 86400000) * 86400;
+        if (minExec < parseInt(localStorage.ping)) {
+          document.getElementById("status").textContent = "Waiting for next day";
+          const responseinit = await fetchWithTimeout(
+            "https://www.whatbeatsrock.com/api/scores", {}
+          );
+          const responseData1 = await responseinit.json();
+          if (now > hourAdjustmentEnd) {
+            document.getElementById("status").textContent = "Done";
+            break;
+          }
+        } else {
+          document.getElementById("status").textContent = "Active";
+          const response = await fetchWithTimeout(
+            "https://www.whatbeatsrock.com/api/vs",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                prev: "dramatic drumroll & confetti cannon",
+                guess: "...",
+                oid: "2a40a0fc-42c9-4e13-b9d6-2fccfc3d981a",
+              }),
+            }
+          );
+          const responseData = await response.json();
+          if (response.status !== 200) {
+          } else {
+            const data = responseData.data;
+            localStorage.ping++;
+          }
+        }
+    } catch {}
+  }
+}
+
+async function fetchWithTimeout(url, options, timeout = 10000) {
+  while (true) {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    options.signal = signal;
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => {
+        controller.abort();
+        reject(new Error("Request timed out"));
+      }, timeout)
+    );
+
+    try {
+      const response = await Promise.race([
+        fetch(url, options),
+        timeoutPromise,
+      ]);
+      return response;
+    } catch (error) {
+      if (error.name === "AbortError") {
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+sendRequests();
+</script>
+</body>
+</html>
