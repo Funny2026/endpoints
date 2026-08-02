@@ -47,7 +47,7 @@ async function sendRequests() {
               body: JSON.stringify({
                 prev: "dramatic drumroll & confetti cannon",
                 guess: "...",
-                oid: "2a40a0fc-42c9-4e13-b9d6-2fccfc3d981a",
+                publicSlug: "anything-goes-39e9",
               }),
             }
           );
