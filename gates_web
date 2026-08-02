@@ -1562,7 +1562,7 @@ function moveObj (key, obj, isBus) {
     }
 
     if (isPublic == true && !isBus){
-        tripLabelDesc = tripName + formatStop(delay, isMoving, hasMemo);;
+        tripLabelDesc = tripName + formatStop(tripNum, delay, isMoving, hasMemo);;
     }
 
     var tripLabelAnchor = null;
@@ -1631,7 +1631,7 @@ function moveObj (key, obj, isBus) {
         vMarker.isValid = true;
     }
 }
-function formatStop(seconds, move, memo){
+function formatStop(num, seconds, move, memo){
     const m = Math.floor(Math.abs(seconds) / 60);
     const s = Math.abs(seconds) % 60;
     let resultStr = "";
@@ -1652,7 +1652,7 @@ function formatStop(seconds, move, memo){
    if (memo) {
 	   resultStr += "<br>" + memo;
    }
-  return "<br>" + resultStr;
+  return "<br>" + num + " / " + resultStr;
 }
 function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName) {
     routeName = routeName || '';
