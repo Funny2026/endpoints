@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1">
-    <script type="text/javascript" src="/GoTracker/web/Scripts/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="/GOTracker/web/Scripts/jquery-1.7.min.js"></script>
 <title>
 
 </title></head>
@@ -12,9 +12,9 @@
             alert(err);
         }
     </script>
-    <form method="post" action="./GoMap.aspx?mode=Public&amp;followtrain=false&amp;Language=en&amp;stationId=0&amp;Service=01&amp;IncludeEquipmentTrip=false" id="form1">
+    <form method="post" action="./GoMap.aspx?mode=Public&amp;followtrain=false&amp;Language=en&amp;stationId=0&amp;Service=09&amp;IncludeEquipmentTrip=false" id="form1">
 <div class="aspNetHidden">
-<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="4a+VbxFgKCh+pMwC6sePyA0cihFJqDu3RpuYwgBK/ZC9wWzBMF/E0awcmhZbtnpw+x48N8qVgDzJorRCY22177USu8w=" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="jW7K26jjmqFxAtIMOZAck+KAUGbmvR5CF6+1jc/uzLjuMU+qHlsMmzxWE5WDBa3b2+7lM+NvTROe8ChRKZQFxTHjuHs=" />
 </div>
 
 <div class="aspNetHidden">
@@ -26,7 +26,7 @@
     </div>
     </form>
     
-<head id="MapHead">
+<head id="MapHead"> 
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 
     <style type="text/css">
@@ -72,12 +72,11 @@
          vertical-align: middle;
          border: 2px solid black;
          white-space: nowrap;
-         filter: alpha(opacity=100);
-         -moz-opacity:1;
-         -khtml-opacity: 1;
-         opacity: 1;
-       }
-	   .trainMarkerAffected
+        filter: alpha(opacity=100);     
+        -moz-opacity:1;
+        -khtml-opacity: 1;
+        opacity: 1;    
+       }	   .trainMarkerAffected
        {
          width: auto;
          color:Blue;
@@ -163,33 +162,13 @@
          text-align: center;
          z-index:2;
        }
-	   .stationMarkerLocked
+	   .MarkerLocked
        {
-         width: auto;
-         color:Black;
-         padding: 1px;
          background-color: #FF8080;
-         font-family: Arial Narrow, Arial, sans-serif;
-         font-size: 10px;
-         font-weight: bold;
-         border: 1px solid black;
-         white-space: nowrap;
-         text-align: center;
-         z-index:2;
        }
-	   .stationMarkerLockedActive
+	   .MarkerLockedActive
        {
-         width: auto;
-         color:Black;
-         padding: 1px;
          background-color: red;
-         font-family: Arial Narrow, Arial, sans-serif;
-         font-size: 10px;
-         font-weight: bold;
-         border: 1px solid black;
-         white-space: nowrap;
-         text-align: center;
-         z-index:2;
        }
        .tripLabel {
          color: black;
@@ -278,9 +257,13 @@
         }
 
     </style>
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&callback=initializeMaps&key=AIzaSyAB4-ibpSep_TQKBB99Tbal6eyn96qo43Q" ></script>
-    <script type="text/javascript" src="/GoTracker/web/Scripts/markerwithlabel.js"></script>
-    <script type="text/javascript" src="/GoTracker/web/Scripts/markerwithlabel_Top.js"></script>
+    <script type="text/javascript">
+        var googleMapsReady = false;
+        function initializeMaps() {
+            googleMapsReady = true;
+        }
+    </script>
+    <script async src="https://maps.googleapis.com/maps/api/js?v=quarterly&libraries=marker&loading=async&callback=initializeMaps&key=AIzaSyAB4-ibpSep_TQKBB99Tbal6eyn96qo43Q" ></script>
     <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite.js"></script>-->
 <script type="text/javascript">
 let codesData;
@@ -409,7 +392,36 @@ class Dashboard {
         window.affectedTrips = this.alllockedStationVehicleIds;
 		if (JSON.stringify(c1) != JSON.stringify(window.lockedStationIds) || JSON.stringify(c2) != JSON.stringify(window.activeLockedStationIds) || JSON.stringify(c3) != JSON.stringify(window.affectedTrips)) {
 			reloadAllTrips();
-			plotAllStations();
+                      try{
+                        let nodeList = document.querySelectorAll(".StationMarkerQuery");
+                        for(let i=0; i<nodeList.length; i++) {
+                            nodeList[i].classList.remove("MarkerLocked");
+                            nodeList[i].classList.remove("MarkerLockedActive");
+                        }
+                      }catch{}
+			                      try{
+                        let nodeList = document.querySelectorAll(".StationPin");
+                        for(let i=0; i<nodeList.length; i++) {
+                            nodeList[i].src = "/GOTracker/web/images/s_icon.png"
+                        }
+                      }catch{}
+			try{
+                      window.lockedStationIds.forEach(i=>{
+if(!activeLockedStationIds.includes(i)){
+document.querySelector(".S" + i).classList.add("MarkerLocked")
+}
+})
+window.activeLockedStationIds.forEach(i=>{
+document.querySelector(".S" + i).classList.add("MarkerLockedActive")
+})
+			}catch{}
+			try{
+                      window.lockedStationIds.forEach(i=>{
+if(!activeLockedStationIds.includes(i)){
+document.querySelector(".Simg" + i).src = "https://raw.githubusercontent.com/Funny2026/endpoints/refs/heads/main/icons/s_icon_locked.png"
+}
+})
+			}catch{}
 		}
     }
 }
@@ -644,14 +656,15 @@ var allMarker=[];
 var allMarkerKey=[];
 
 function measureText(pText, pClass) { 
-    var lDiv = document.createElement('lDiv'); 
+    var lDiv = document.createElement('div'); 
  
     document.body.appendChild(lDiv); 
  
     lDiv.className = pClass;
-    lDiv.style.position = "absolute"; 
-    lDiv.style.left = -1000; 
-    lDiv.style.top = -1000; 
+    lDiv.style.position = 'absolute';
+    lDiv.style.visibility = 'hidden'; 
+    lDiv.style.left = '0px'; 
+    lDiv.style.top = '0px'; 
  
     lDiv.innerHTML = pText; 
  
@@ -665,6 +678,10 @@ function measureText(pText, pClass) {
  
     return lResult; 
 } 
+
+function ChangeCursor(tableRow) {
+    tableRow.style.cursor = 'pointer';
+}
 
 function replaceAll(txt, replace, with_this) {
   return txt.replace(new RegExp(replace, 'g'),with_this);
@@ -711,32 +728,30 @@ function getCurrentTime() {
 
 //var varsUrl = $.getUrlVars();
 var map;
-var gLon = 0, gLat = 0;
-var busMarker = new Object();
 //var trainMarker = new Object();
 var tripInfoWindow = new Object();
 var markerImgUrl = new Object();
 var pMarkerImg = new Object();
 
-markerImgUrl[1] = '/GoTracker/web/Images/trainMovingGreen.png';
-markerImgUrl[2] = '/GoTracker/web/Images/trainMovingRed.png';
-markerImgUrl[3] = '/GoTracker/web/Images/trainMovingRed.png';
-markerImgUrl[4] = '/GoTracker/web/Images/trainStopGreen.png';
-markerImgUrl[5] = '/GoTracker/web/Images/trainStopRed.png';
-markerImgUrl[6] = '/GoTracker/web/Images/trainStopRed.png';
-markerImgUrl[7] = '/GoTracker/web/Images/greenbus.png';
-markerImgUrl[8] = '/GoTracker/web/Images/bluebus.png';
-markerImgUrl[9] = '/GoTracker/web/Images/overlappingTrip.png';
+markerImgUrl[1] = '/GOTracker/web/Images/trainMovingGreen.png';
+markerImgUrl[2] = '/GOTracker/web/Images/trainMovingRed.png';
+markerImgUrl[3] = '/GOTracker/web/Images/trainMovingRed.png';
+markerImgUrl[4] = '/GOTracker/web/Images/trainStopGreen.png';
+markerImgUrl[5] = '/GOTracker/web/Images/trainStopRed.png';
+markerImgUrl[6] = '/GOTracker/web/Images/trainStopRed.png';
+markerImgUrl[7] = '/GOTracker/web/Images/greenbus.png';
+markerImgUrl[8] = '/GOTracker/web/Images/bluebus.png';
+markerImgUrl[9] = '/GOTracker/web/Images/overlappingTrip.png';
 
-    //var goDataAPIurl = '/GoTracker/web/GODataAPIProxy.svc';
-    var goDataAPIurl = 'https://www.gotracker.ca/GoTracker/web/GODataAPIProxy.svc';    
+    //var goDataAPIurl = '/GOTracker/web/GODataAPIProxy.svc';
+    var goDataAPIurl = 'https://www.gotracker.ca/GOTracker/web/GODataAPIProxy.svc';    
 var goAVLAPIurl = 'http://hosdcsc01/Development/GOAVL/GOAVL.svc/web';
 var tripNodeName = "Locations";
 var tripId = "";
 var hastusTripId = "";
 var mode = "Public";
-var corridor = "Lakeshore West";
-var serviceId = "01";
+var corridor = "Lakeshore East";
+var serviceId = "09";
 var isPublic = true;
 var showTrainLabel = true;
 var noTripDataReturnCount = 0;
@@ -748,18 +763,119 @@ var mapTripErrorRetryInterval = 180000;
 var mapTripCurrentErrorCount = 0;
 
 $.each(markerImgUrl, function (key, value) {
-    pMarkerImg[key] = new google.maps.MarkerImage(value, null, null, new google.maps.Point(0, 41), null);
+	console.log(key)
+    pMarkerImg[key] = { url: value, anchorX: 0, anchorY: 41 };
 });
 
 function vehMarker(myMarker, key){
     this.marker = myMarker;
     this.InfoWindow = null;
-    this.InfoWindowListener = null;
     this.isValid = false;
     this.key = key;
 }
 
-var l1 = 5, l2 = 10, l3 = 10;
+var AdvancedMarkerElement = null;
+
+function createAdvancedMarker(options, stationNum = -1, isStation = false) {
+    if (!AdvancedMarkerElement) {
+        console.error('AdvancedMarkerElement not loaded yet');
+        return null;
+    }
+    var content = document.createElement('div');
+    content.style.cssText = 'position: relative; cursor: pointer; min-width: 1px; min-height: 1px;';
+
+    var anchorX = (options.icon && options.icon.anchorX) || 0;
+    var anchorY = (options.icon && options.icon.anchorY) || 0;
+
+    var iconImg = null;
+    var labelDiv = null;
+
+    if (options.icon && options.icon.url) {
+		console.log(options.icon)
+        iconImg = document.createElement('img');
+        iconImg.src = options.icon.url;
+		iconImg.className = isStation ? "StationPin Simg" + stationNum : "";
+        iconImg.style.cssText = 'position: absolute; display: block;';
+        iconImg.style.left = (-anchorX) + 'px';
+        iconImg.style.top = (-anchorY) + 'px';
+        iconImg.draggable = false;
+    }
+
+    if (options.labelContent) {
+        labelDiv = document.createElement('div');
+        labelDiv.className = options.labelClass || 'markerLabel';
+        labelDiv.innerHTML = options.labelContent;
+        labelDiv.style.cssText = 'position: absolute; white-space: nowrap;';
+
+        if (options.labelAnchor) {
+            labelDiv.style.left = (-options.labelAnchor.x) + 'px';
+            labelDiv.style.top = (-options.labelAnchor.y) + 'px';
+        } else {
+            labelDiv.style.left = '0px';
+            labelDiv.style.top = '0px';
+        }
+    }
+
+    if (options.labelInBackground) {
+        if (labelDiv) {
+            labelDiv.style.zIndex = '1';
+            content.appendChild(labelDiv);
+        }
+
+        if (iconImg) {
+            iconImg.style.zIndex = '2';
+            content.appendChild(iconImg);
+        }
+    } else {
+        if (iconImg) {
+            iconImg.style.zIndex = '1';
+            content.appendChild(iconImg);
+        }
+
+        if (labelDiv) {
+            labelDiv.style.zIndex = '2';
+            content.appendChild(labelDiv);
+        }
+    }
+
+    var marker = new AdvancedMarkerElement({
+        position: options.position,
+        map: options.map,
+        content: content,
+        title: options.title || '',
+        zIndex: options.zIndex,
+        gmpClickable: true
+    });
+
+    marker._contentDiv = content;
+    marker._labelDiv = labelDiv;
+    marker._iconImg = iconImg;
+    return marker;
+}
+
+function updateAdvancedMarkerLabel(marker, labelContent) {
+    if (marker._labelDiv) {
+        marker._labelDiv.innerHTML = labelContent;
+    }
+}
+
+function updateAdvancedMarkerIcon(marker, icon) {
+    if (marker._iconImg && icon && icon.url) {
+        marker._iconImg.src = icon.url;
+    }
+}
+
+function initAdvancedMarkers() {
+    try {
+        AdvancedMarkerElement = google.maps.marker.AdvancedMarkerElement;
+        return true;
+    } catch (e) {
+        console.error('Failed to initialize AdvancedMarkerElement:', e);
+        return false;
+    }
+}
+
+var l1 = 5;
 
 
 var optionsDiv = document.createElement('DIV');
@@ -793,7 +909,7 @@ function FollowControl(map, div, follow) {
 
     google.maps.event.addDomListener(followUI, 'click', function() {
     control.setFollow( !control.getFollow() );
-	bFollow = control.folllow_;
+	bFollow = control.follow_;
 	if (control.follow_)
 	{
         if (runningTrainPos != null && runningTrainPos != undefined)
@@ -816,26 +932,21 @@ function plotAllStations() {
     var stationIcon = '/GOTracker/web/images/s_icon.png';
     var stationIcon_cur = '/GOTracker/web/images/h_icon.png';
     var stationIcon_union = '/GOTracker/web/images/Union.png';
-    var yardImg = null;
-    var stationImg = null;
-    var stationImg_cur = null;
-    var stationImg_union = null;
-    if (yardIcon != '')
-        yardImg = new google.maps.MarkerImage(yardIcon, null, null, null, null, null);
-    if (stationIcon != '')
-        stationImg = new google.maps.MarkerImage(stationIcon, null, null, null, null, null);
-    if (stationIcon_cur != '')
-        stationImg_cur = new google.maps.MarkerImage(stationIcon_cur, null, null, null, null, null);
-    if (stationIcon_union != '')
-        stationImg_union = new google.maps.MarkerImage(stationIcon_union, null, null, null, null, null);
+    var yardImg = yardIcon ? { url: yardIcon, anchorX: 10, anchorY: 10 } : null;
+    var stationImg = stationIcon ? { url: stationIcon, anchorX: 10, anchorY: 10 } : null;
+    var stationImg_cur = stationIcon_cur ? { url: stationIcon_cur, anchorX: 10, anchorY: 10 } : null;
+    var stationImg_union = stationIcon_union ? { url: stationIcon_union, anchorX: 60, anchorY: 15 } : null;
 
     if (!staticStationMap){
         // plot union station first
         var unionPos = new google.maps.LatLng(unionStationLat, unionStationLon);
-        var unionMarker = new google.maps.Marker({ map: map, position: unionPos, title: unionStationName });
-        stationImg_union.anchor = new google.maps.Point(60, 15);
-        unionMarker.setIcon(stationImg_union);
-        unionMarker.setMap(map);    
+            var unionMarker = createAdvancedMarker({
+                position: unionPos,
+                map: map,
+                title: unionStationName,
+                icon: stationImg_union,
+                zIndex: 1
+            });
         addStationInfoWindow('UN', unionMarker, unionStationName, unionStationId);
     }
 
@@ -855,46 +966,43 @@ function plotAllStations() {
                 isYard = this['isYard'] == 'true'? true: false;
             } catch (e) {}
 
-            if (isYard == false || (includeEquipmentTrip == 'true' && isYard == true)){
+            if (isYard == false || (includeEquipmentTrip == 'true' && isYard == true)) {
                 var pos = new google.maps.LatLng(lat, lon);
-                if (lstationId != unionStationId){
-					let labelClassMarker = "stationMarker";
+
+                if (lstationId != unionStationId) {
+                var marker;
+                var iconToUse = null;
+                if (lstationId != curr_stationId) {
+                    if (isYard && yardImg != null) {
+                        iconToUse = yardImg;
+                    } else if (stationImg != null) {
+                        iconToUse = stationImg;
+                    }
+                } else {
+                    if (stationImg_cur != null) {
+                        iconToUse = stationImg_cur;
+                    }
+                }
+                  let labelClassMarker = "stationMarker";
 					if (window.activeLockedStationIds && window.activeLockedStationIds.includes(lstationId)) {
 						labelClassMarker = "stationMarkerLockedActive";
 					} else if (window.lockedStationIds && window.lockedStationIds.includes(lstationId)) {
 						labelClassMarker = "stationMarkerLocked";
 					}
-                    //var marker = new google.maps.Marker({ map: map, position: pos, title: lstationName });
                     var labelLength = measureText(lstationName.toUpperCase(), labelClassMarker).width;
-                    var gPoint = new google.maps.Point(labelLength/2, 0);
-                    var marker = new MarkerWithLabel({
-                                        position: pos,
-                                        draggable: false,
-                                        labelContent: lstationName.toUpperCase(),
-                                        labelInBackground: true,
-                                        labelAnchor: gPoint,
-                                        labelClass: labelClassMarker, // the CSS class for the label                                    
-                                        labelStyle: { width: (labelLength)},
-                                        map: map
-                                });
+                    var labelAnchor = { x: labelLength / 2, y: -4 }
 
-                    if (lstationId != curr_stationId) {
-                        if (isYard){
-                            if (yardImg != null){
-                                marker.setIcon(yardImg);
-                            }
-                        }
-                        else{
-                            if (stationImg != null){
-                                marker.setIcon(stationImg);
-                            }
-                        }
-                    }
-                    else {
-                        if (stationImg_cur != null){
-                            marker.setIcon(stationImg_cur);
-                        }
-                    }
+                    marker = createAdvancedMarker({
+                        position: pos,
+                        map: map,
+                        title: lstationName,
+                        labelContent: lstationName.toUpperCase(),
+                        labelClass: labelClassMarker + " StationMarkerQuery S" + lstationId,
+                        labelAnchor: labelAnchor,
+                        labelInBackground: true,
+                        icon: iconToUse,
+                        zIndex: 2
+                    }, lstationId, true);
                     addStationInfoWindow(lstopCd, marker, lstationName, lstationId);
                 }
             }
@@ -909,11 +1017,11 @@ function addStationInfoWindow(lstopCd, marker, lstationName, lstationId)
         maxWidth: 380
     });
 
-    google.maps.event.addListener(marker, "click", function () {
-        var strContent = getStationStatusInfo(lstationName, lstationId, lstopCd);
-        tripInfoWindow[lstopCd].setContent(strContent);
-        tripInfoWindow[lstopCd].open(map, marker);
-    });
+        marker.addEventListener('gmp-click', function () {
+            var strContent = getStationStatusInfo(lstationName, lstationId, lstopCd);
+            tripInfoWindow[lstopCd].setContent(strContent);
+            tripInfoWindow[lstopCd].open({ anchor: marker, map: map });
+        });
 }
 
 function loadMap(centerPos, useFollowControl) {
@@ -931,7 +1039,8 @@ function loadMap(centerPos, useFollowControl) {
             mapTypeControl: true,
             mapTypeControlOptions: {
                 style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-            }
+            },
+            mapId: 'DEMO_MAP_ID'
         };
         map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
         // the "dummy" creates a unique URL so it is not cached (good for testing changes)
@@ -1018,7 +1127,6 @@ function getStationStatusInfo(stationName, lstationId, lstopCd) {
     contentTxt += '</span>';
     return contentTxt;
 }
-
 function fetchTripLocationsForServices(serviceIds, lang) {
     const urlBase = goDataAPIurl + "/TripLocation/Service/Lang/";
     return Promise.allSettled(
@@ -1156,7 +1264,6 @@ function moveAllObj(moveMode) {
         });
     }
 }
-
 function tripDataReturn(data) {
     isAjaxReturned = true;
     var noTripErrStr = "Currently no Service is available";
@@ -1290,7 +1397,7 @@ function removeMarkerLoop(removeAll){
     if (hasMarker){
         //var newMarker = new Object();
         var removeList = [];
-        $.each(allMarker, function(key, value){            
+        $.each(allMarker, function(key, value){
             if (removeAll || value.isValid == false){
                 removeList.push(value.key);
                 removeMarker(value); 
@@ -1315,29 +1422,27 @@ function removeMarkerLoop(removeAll){
     }
 }
 
-function removeMarker(value){
+function removeMarker(value) {
+    if (value._clickHandler && value.marker) {
+        value.marker.removeEventListener('gmp-click', value._clickHandler);
+        value._clickHandler = null;
+    }
     if (value.marker != null && value.marker != undefined){
-        //var str = 'Marker removed - value.key + ', ' + getCurrentTime();
-        //trace(str);
-//        var idx = allMarkerKey.indexOf(key);
-//        if (idx != -1) {
-//            allMarkerKey.splice(idx, 1);
-//            allMarker.splice(idx, 1);
-//        }
-        value.marker.setVisible(false);
-        value.marker.setTitle('');
-        value.marker.setIcon(null);
-        value.marker.setMap(null);
+            value.marker.map = null;
+            if (value.marker._contentDiv) {
+                value.marker._contentDiv.remove();
+                value.marker._contentDiv = null;
+            }
+            value.marker._labelDiv = null;
+            value.marker._iconImg = null;
+
         value.marker = null;
         delete value.marker;
     }
     if (value.InfoWindow != null && value.InfoWindow != undefined){
         value.InfoWindow.setContent('');
         value.InfoWindow.close();
-        google.maps.event.removeListener(value.InfoWindowListener);
         value.InfoWindow = null;
-        value.InfoWindowListener = null;
-        delete value.InfoWindowListener;
         delete value.InfoWindow;
     }
 }
@@ -1393,8 +1498,10 @@ function moveObj (key, obj, isBus) {
     var trainMeet = false;
     var vMarker = null;
     var isMoving = false;
-	var hasMemo = null;
-
+    var hasMemo = null;
+    //try {
+    //    speed = parseInt($(obj).attr('Speed'));
+    //} catch (e) { }
     try {
         isMoving = ($(obj).attr('IsMoving')) == 'true'? true: false;
     } catch (e) {}
@@ -1415,10 +1522,9 @@ function moveObj (key, obj, isBus) {
     try{
         isOverlapping = ($(obj).attr('IsOverlapping')) == 'true'? true: false;
     } catch (e) {}
-	try{
+    try{
         hasMemo = ($(obj).attr('DelayMemo')) || null;
     } catch (e) {}
-
     if (tripNum == '') return;
     if (lat == null || lon == null) return;
     if (lat == 0 && lon == 0) {
@@ -1455,28 +1561,14 @@ function moveObj (key, obj, isBus) {
         }
     }
 
-    //var tripLabel = tripNum;
-    var tripLabelLengthOffset = 0;
-    //var tripLabelLength = tripLabel.length * 9;
-    if (delay > 0){
-        //tripLabel += ' (' + delayInt + ')' ;
-        //tripLabelLength = tripLabel.length * 8;
-    }
-    else{
-        var tBox = measureText(' (0:00:00)', "trainMarker");
-        tripLabelLengthOffset = tBox.width;
-        tBox = null;
-        delete tBox;
-    }
     if (isPublic == true && !isBus){
-        tripLabelDesc = tripName + formatStop(delay, isMoving, hasMemo);
-        //tripLabelLength = tripLabel.length * 8;
+        tripLabelDesc = tripName + formatStop(delay, isMoving, hasMemo);;
     }
 
-    var tBox = measureText(tripLabelDesc, "trainMarker");
-    var tripLabelLength = tBox.width + tripLabelLengthOffset;
-    tBox = null;
-    delete tBox;
+    var tripLabelAnchor = null;
+    if (showTrainLabel && tripLabelDesc) {
+        tripLabelAnchor = { x: 0, y: -1 };
+    }
 
     //tripLabel = "<span id='trainIcon' style='length:" + tripLabelLength + "px;'>" + tripLabel + "</span>";
     vMarker = findMarker(key);
@@ -1493,63 +1585,52 @@ function moveObj (key, obj, isBus) {
     if (vMarker == null) {
         //trace('Trip Added: ' + tripNum + '(' + tripName + '), trainmarker count:' + allMarker.length);
         var marker;
-        if (showTrainLabel){
-            marker = new MarkerWithLabel_Top({
-                position: trainPos,
-                draggable: false,
-                labelContent: tripLabelDesc,
-                labelInBackground: false,
-                labelAnchor: new google.maps.Point(0, 0),
-                labelClass: labelClassMarker, // the CSS class for the label
-                labelStyle: { width: (tripLabelLength) }
-            });
-            //marker.set("labelContent", tripLabel);
-            marker.setMap(map);
-        }
-        else{
-            marker = new google.maps.Marker({ map: map, position: trainPos });
-        }
+            if (showTrainLabel) {
+                marker = createAdvancedMarker({
+                    position: trainPos,
+                    map: map,
+                    title: routeName ? replaceAll(routeName, '<hr/>', '\r\n\r\n') : '',
+                    labelContent: tripLabelDesc,
+                    labelClass: labelClassMarker,
+                    labelAnchor: tripLabelAnchor,
+                    labelInBackground: false,
+                    icon: markerImg,
+                    zIndex: 30000000
+                });
+            } else {
+                marker = createAdvancedMarker({
+                    position: trainPos,
+                    map: map,
+                    title: routeName ? replaceAll(routeName, '<hr/>', '\r\n\r\n') : '',
+                    icon: markerImg,
+                    zIndex: 30000000
+                });
+            }
         
         vMarker = new vehMarker(marker, key);
         //trainMarker[key] = vMarker;
         allMarker.push(vMarker);
         allMarkerKey.push(key);
         hasMarker = true;
-        marker = null;
-        delete marker;
         //trace("Marker created: " + vMarker.key + ", " + vMarker.marker);        
     }
     else {        
-        //vMarker = trainMarker[key];
-        //trace('Trip key: ' + vMarker.key + ', Trip remapped: ' + tripNum + '(' + tripName + '), trainmarker :' + vMarker.marker);
-        if (vMarker.marker.getMap() == null){
-            vMarker.marker.setMap(map);
-        }        
-        if (showTrainLabel) {
-            vMarker.marker.set("labelContent", tripLabelDesc);
-            vMarker.marker.set("labelStyle", '{width: ' + tripLabelLength + '}');
-			vMarker.marker.set("labelClass", labelClassMarker);
-        }
-        vMarker.marker.setPosition(trainPos);
-        //vMarker.marker.set("labelClass", "train");
+            if (vMarker.marker.map == null) {
+                vMarker.marker.map = map;
+            }
+            vMarker.marker.position = trainPos;
+            if (showTrainLabel) {
+                updateAdvancedMarkerLabel(vMarker.marker, tripLabelDesc);
+            }
+            updateAdvancedMarkerIcon(vMarker.marker, markerImg);
+            vMarker.marker.zIndex = 30000000;
     }
 
     if (vMarker.marker != null && vMarker.marker != undefined){
         SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName);
-        vMarker.marker.setIcon(markerImg);
-        vMarker.marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 30000000);
         vMarker.isValid = true;
     }
-    vMarker = null;
-    markerImg = null;
-    trainPos = null;
-    delete vMarker;
-    delete markerImg;
-    delete trainPos;
-    obj = null;
-    delete obj;
 }
-
 function formatStop(seconds, move, memo){
     const m = Math.floor(Math.abs(seconds) / 60);
     const s = Math.abs(seconds) % 60;
@@ -1573,9 +1654,10 @@ function formatStop(seconds, move, memo){
    }
   return "<br>" + resultStr;
 }
-	
-function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName){
-    vMarker.marker.setTitle(replaceAll(routeName, '<hr/>', '\r\n\r\n'));
+function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName) {
+    routeName = routeName || '';
+    var titleText = replaceAll(routeName, '<hr/>', '\r\n\r\n');
+    vMarker.marker.title = titleText;
 
     var routeNameBR = routeName.replace(/(\r\n|\n|\r)/gm, htmlBR);
     var strContent = '<span class="tripLabel">' + htmlBR + routeNameBR + '</span>';
@@ -1586,9 +1668,10 @@ function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName){
             content: strContent
         });
 
-        vMarker.InfoWindowListener = google.maps.event.addListener(vMarker.marker, "click", function () {
-            vMarker.InfoWindow.open(map, vMarker.marker);
-        });
+        vMarker._clickHandler = function () {
+            vMarker.InfoWindow.open({ anchor: vMarker.marker, map: map });
+        };
+        vMarker.marker.addEventListener('gmp-click', vMarker._clickHandler);
     }
     else{
         vMarker.InfoWindow.setContent(strContent);
@@ -1598,19 +1681,45 @@ function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName){
 }
 
 $(document).ready(function () {
-    trace('Started');
-    initMap();
-    if (!staticStationMap){
-        setTimeout(doMove, 1500);
-        t = setInterval(toLoop, 10000);
-    }
+    asyncReadyHandler();
 });
 
-function initMap(){
+async function asyncReadyHandler() {
+    try {
+        trace('Started');
+        var waitCount = 0;
+        while (!googleMapsReady && waitCount < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitCount++;
+        }
+        if (!googleMapsReady) {
+            console.error('Google Maps API failed to load after timeout');
+            return;
+        }
+        if (!initMap()) {
+            return;
+        }
+
+        if (!staticStationMap) {
+            setTimeout(doMove, 1500);
+            t = setInterval(toLoop, 10000);
+        }
+    } catch (e) {
+        console.error('Error in ready:', e);
+    }
+}
+
+function initMap() {
+    if (!initAdvancedMarkers()) {
+        console.error('Cannot initialize map: AdvancedMarkerElement not available');
+        return false;
+    }
+
     panTrain = true;
     var stationPos = new google.maps.LatLng(stationLat, stationLon);
     loadMap(stationPos, allowFollowTrain);
     delete stationPos;
+    return true;
 }
 
 function doMove(){
@@ -1629,10 +1738,6 @@ function doMove(){
         }
     }
     catch(e){}
-    finally {
-        rtn = null;
-        delete rtn;
-    }
 }
 
 function toLoop() {
@@ -1646,10 +1751,6 @@ function toLoop() {
     }
     catch (e) {
         waiting = false;
-    }
-    finally {
-        rtn = null;
-        delete rtn;
     }
 }
 
@@ -1666,10 +1767,11 @@ function reloadAllTrips(){
     removeMarkerLoop(true);
     doMove();
 }
+window.data = { reloadAllTrips };
 </script>
 </head>
 <span id="err"></span>
-<div id="map_canvas" style="z-index:0"></div>
+<div id="map_canvas" style="z-index:0;"></div>
 
 
 </body>
