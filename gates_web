@@ -763,7 +763,6 @@ var mapTripErrorRetryInterval = 180000;
 var mapTripCurrentErrorCount = 0;
 
 $.each(markerImgUrl, function (key, value) {
-	console.log(key)
     pMarkerImg[key] = { url: value, anchorX: 0, anchorY: 41 };
 });
 
@@ -791,7 +790,6 @@ function createAdvancedMarker(options, stationNum = -1, isStation = false) {
     var labelDiv = null;
 
     if (options.icon && options.icon.url) {
-		console.log(options.icon)
         iconImg = document.createElement('img');
         iconImg.src = options.icon.url;
 		iconImg.className = isStation ? "StationPin Simg" + stationNum : "";
@@ -853,9 +851,10 @@ function createAdvancedMarker(options, stationNum = -1, isStation = false) {
     return marker;
 }
 
-function updateAdvancedMarkerLabel(marker, labelContent) {
+function updateAdvancedMarkerLabel(marker, labelContent, labelClass) {
     if (marker._labelDiv) {
         marker._labelDiv.innerHTML = labelContent;
+		marker._labelDiv.className = labelClass;
     }
 }
 
@@ -1562,7 +1561,7 @@ function moveObj (key, obj, isBus) {
     }
 
     if (isPublic == true && !isBus){
-        tripLabelDesc = tripName + formatStop(tripNum, delay, isMoving, hasMemo);;
+        tripLabelDesc = tripName + formatStop(tripNum, delay, isMoving, hasMemo, vehicleId);
     }
 
     var tripLabelAnchor = null;
@@ -1620,7 +1619,7 @@ function moveObj (key, obj, isBus) {
             }
             vMarker.marker.position = trainPos;
             if (showTrainLabel) {
-                updateAdvancedMarkerLabel(vMarker.marker, tripLabelDesc);
+                updateAdvancedMarkerLabel(vMarker.marker, tripLabelDesc, labelClassMarker);
             }
             updateAdvancedMarkerIcon(vMarker.marker, markerImg);
             vMarker.marker.zIndex = 30000000;
@@ -1631,7 +1630,7 @@ function moveObj (key, obj, isBus) {
         vMarker.isValid = true;
     }
 }
-function formatStop(num, seconds, move, memo){
+function formatStop(num, seconds, move, memo, engine){
     const m = Math.floor(Math.abs(seconds) / 60);
     const s = Math.abs(seconds) % 60;
     let resultStr = "";
@@ -1649,10 +1648,12 @@ function formatStop(num, seconds, move, memo){
         resultStr = "Early " + resultStr;
     }
    resultStr += move ? " / Moving" : " / Stopped";
+   resultStr += " / " + num;
+   resultStr += engine ? " E" + engine : "";
    if (memo) {
 	   resultStr += "<br>" + memo;
    }
-  return "<br>" + num + " / " + resultStr;
+  return "<br>" + resultStr;
 }
 function SetTripContent(vMarker, speedStr, speed, tripNum, tripName, routeName) {
     routeName = routeName || '';
