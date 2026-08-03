@@ -417,9 +417,7 @@ document.querySelector(".S" + i).classList.add("MarkerLockedActive")
 			}catch{}
 			try{
                       window.lockedStationIds.forEach(i=>{
-if(!activeLockedStationIds.includes(i)){
 document.querySelector(".Simg" + i).src = "https://raw.githubusercontent.com/Funny2026/endpoints/refs/heads/main/icons/s_icon_locked.png"
-}
 })
 			}catch{}
 		}
