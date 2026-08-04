@@ -126,17 +126,20 @@
     }
 
     #submit-guess:hover,
-    #reverse-button:hover {
+    #reverse-button:hover,
+    #log-button:hover {
       background-color: #6dc782;
     }
 
     #submit-guess:disabled,
-    #reverse-button:disabled {
+    #reverse-button:disabled,
+    #log-button:disabled {
       background-color: #cccccc;
       cursor: not-allowed;
     }
 
-    #reverse-button {
+    #reverse-button,
+    #log-button {
       font-size: 1rem;
       padding: 0.5rem 1rem;
       background-color: #8fffa9;
@@ -183,6 +186,7 @@
     }
 
     #reverse-button,
+    #log-button,
     #play-again {
       font-family: ClearviewADA, sans-serif;
       font-size: 1rem;
@@ -196,7 +200,7 @@
     }
 
     #toggle-buttons-container {
-      display: block;
+      display: flex;
       gap: 0.5rem;
       margin-top: 0.5rem;
       align-items: center;
@@ -224,7 +228,7 @@
     }
 
     .result-emoji {
-      font-size: 120px;
+      font-size: 140px;
       margin: 0 10px;
     }
 
@@ -282,6 +286,7 @@
         <button id="compress-toggle1" class="toggle-button">Compress Input 1 (OFF)</button>
         <button id="compress-toggle2" class="toggle-button">Compress Input 2 (OFF)</button>
       </div>
+      <button id="log-button" style="display:none">Save Generated Log</button>
     </div>
   </div>
   <script>
@@ -309,9 +314,10 @@
       const reverseButton = document.getElementById("reverse-button");
       const compressToggle1 = document.getElementById("compress-toggle1");
       const compressToggle2 = document.getElementById("compress-toggle2");
-
+      const logButton = document.getElementById("log-button");
       let isCompress1 = false;
       let isCompress2 = false;
+      let generationLog = "";
 
       function EIQ(e){let t=e.split('"'),n=[];for(let o=0;o<t.length;o++)o%2==0?n.push(t[o]):n.push(unicodeEncode(t[o]));return n.join("")}
 
@@ -391,6 +397,7 @@
           submitGuessText.style.display = "none";
           submitGuessLoader.style.display = "block";
           emojiEl.classList.add("bounce");
+          logButton.style.display = "none";
         } else {
           submitGuessText.style.display = "block";
           submitGuessLoader.style.display = "none";
@@ -478,6 +485,7 @@
         
         
         let generationCount = 1;
+        generationLog = "";
         try {
             while(true) {
                 let gameId = crypto.randomUUID();
@@ -496,6 +504,7 @@
                 }
                 if (!response1.data.data.guess_wins) {
                     generationCount++;
+                    generationLog += response1.data.data.reason + "\n\n";
                     continue; 
                 }
 
@@ -508,14 +517,17 @@
                 // If server returned 500, treat this generation attempt as failed and try next.
                 if (response2.status === 500) {
                     generationCount++;
+                    generationLog += "TRY_AGAIN_ERROR\n\n";
                     continue;
                 }
 
                 if (!response2.data.data.guess_wins) {
                     generationCount++;
+                    generationLog += response2.data.data.reason + "\n\n";
                     continue;
+                } else {
+                    generationLog += response2.data.data.reason;
                 }
-
                 // Request 3 (Final)
                 const response3 = await fetchWithTimeoutAndRetry(
                     "https://www.whatbeatsrock.com/api/vs", 
@@ -539,20 +551,16 @@
                 reasonEl.textContent = finalData.reason;
                 rawTextEl.textContent = isInputModded ? `Raw input language: ${guess2Raw} with ${guess1Raw}` : '';
 
-                if (finalData.cached) {
-                  if (generationCount == 1) {
-                    cacheEl.textContent = `Cached ${finalData.cache_count} times`;
-                  } else {
-                    cacheEl.textContent = `Cached ${finalData.cache_count} times, Taken ${generationCount} generations`;
-                  }
-                } else {
-                  if (generationCount == 1) {
-                    cacheEl.textContent = ""
-                  } else {
-                    cacheEl.textContent = `Taken ${generationCount} generations`;
-                  }
+                const cacherNum = finalData.cache_count || 0;
+                const cachers = cacherNum ? `Cached ${finalData.cache_count} time${cacherNum == 1 ? "" : "s"}` : "";
+                const playerNum = finalData.disagree_count || 0;
+                const players = playerNum ? ` by ${finalData.disagree_count} player${playerNum == 1 ? "" : "s"}` : "";
+                const insertion = (cacherNum && generationCount != 1) ? ", ": ""; 
+                const generations = generationCount == 1 ? "" : `Taken ${generationCount} generations`
+                if (generationCount != 1) {
+                  logButton.style.display = "block";
                 }
-                
+                cacheEl.textContent = `${cachers}${players}${insertion}${generations}`
                 break; // Success, exit loop.
             }
         } catch (error) {
@@ -564,6 +572,21 @@
       initRNG();
       questionEl.textContent = "what beats what";
       emojiEl.textContent = "🆚";
+      function downloadResult(filename = 'generated-log.txt'){
+        if (!generationLog) return;
+        try {
+          const blob = new Blob([generationLog], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch {}
+      }
+    logButton.addEventListener('click', () => downloadResult());
     })();
   </script>
 
