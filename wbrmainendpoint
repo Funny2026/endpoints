@@ -560,6 +560,9 @@
                 if (generationCount != 1) {
                   logButton.style.display = "block";
                 }
+                if (generationCount >= 100) {
+                  alert("Generation is finished");
+                }
                 cacheEl.textContent = `${cachers}${players}${insertion}${generations}`
                 break; // Success, exit loop.
             }
