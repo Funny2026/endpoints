@@ -544,8 +544,8 @@
                 const finalData = response3.data.data;
                 const guess2Emoji = response2.data.data.guess_emoji || "🤷‍♂️";
                 const isInputModded = guess2EIQstring != guess2Raw || guess1EIQstring != guess1Raw;
-              
-                questionEl.textContent = `${guess1EIQstring} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2EIQstring}`;
+                const questionString = `${guess1EIQstring} ${finalData.guess_wins ? GG_ALL_GAME_CONFIG.judgingCriteria : GG_ALL_GAME_CONFIG.judgingCriteriaLoss} ${guess2EIQstring}`;
+                questionEl.textContent = questionString.length < 25 ? questionString : "";
                 rawLinkEl.textContent = `${guess2EIQstring} with ${guess1EIQstring}`;
                 emojiEl.innerHTML = `<span class="result-emoji">${finalData.guess_emoji || "🤷‍♂️"}</span><span style="font-size: 40px">${finalData.guess_wins ? "🟩" : "🟥"}</span><span class="result-emoji">${guess2Emoji}</span>`;
                 reasonEl.textContent = finalData.reason;
